@@ -46,6 +46,18 @@ Function to switch between menu's
 */
 int menu_switchMenu(unsigned int);
 
+/*
+Function to set the cursor to the next item in the menu
 
+-Returns:       a LCD_MENU error code
+*/
+int menu_goToNextItem();
+
+/*
+Function to set the cursor to the previous item in the menu
+
+-Returns:       a LCD_MENU error code
+*/
+int menu_goToPreviousitem();
 
 #endif
