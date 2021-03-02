@@ -18,14 +18,15 @@ typedef struct
     unsigned int id;
     char *text;
     void (*onClick)(void);
-    int xCoord;
-    int yCoord;
+    unsigned int xCoord;  //Where to start to write the text
+    unsigned int yCoord;  //Where to start to write the text
 } LCD_MENU_ITEM;
 
 //A struct for a menu
 typedef struct menu
 {
     unsigned int id;
+    unsigned int xCoord; //Where to start to write the text
     char *text;
     void (*menuInit)(void);
     void (*menuExit)(void);
@@ -33,8 +34,8 @@ typedef struct menu
     LCD_MENU_ITEM (*items)[MAX_ITEMS_ON_MENU]; //Pointer to an array of menu items
 } LCD_MENU;
 
-//All the menu's
-extern LCD_MENU *lcdMenus[TOTAL_MENUS];
+//Pointer to an array of all the menu's
+extern LCD_MENU (*lcdMenus)[TOTAL_MENUS];
 
 
 /*
