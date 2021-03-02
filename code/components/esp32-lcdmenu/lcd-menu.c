@@ -58,7 +58,7 @@ int menu_initMenus(i2c_lcd1602_info_t *lcd_info)
     mainMenu_Echo->text = "ECHO";
     mainMenu_Echo->xCoord = 15;
     mainMenu_Echo->yCoord = 2;
-    LCD_MENU_ITEM mainMenuItems[MAX_ITEMS_ON_MENU] = {*mainMenu_Radio, *mainMenu_Clock, *mainMenu_Echo, *nullItem};
+    LCD_MENU_ITEM mainMenuItems[MAX_ITEMS_ON_MENU] = {*mainMenu_Radio, *mainMenu_Clock, *mainMenu_Echo, *nullItem}; //!!!!!!!! [BUG] HIJ ONTHOUD DE ITEMS IN DEZE ARRAY NIET, DE ARRAY ZELF WEL
     mainMenu->items = &mainMenuItems;
 
 
@@ -68,8 +68,8 @@ int menu_initMenus(i2c_lcd1602_info_t *lcd_info)
     lcdMenus = &menusArray;
 
     //Set the current lcdMenu en item
-    currentLcdMenu = lcdMenus[MAIN_MENU_ID]->id;
-    currentMenuItem = (*lcdMenus[MAIN_MENU_ID]->items)[0].id;
+    currentLcdMenu = (*lcdMenus)[MAIN_MENU_ID].id;
+    // currentMenuItem = (*(*lcdMenus)[MAIN_MENU_ID].items)[1].id;
 
     //Show the current menu
     displayMenu(lcd_info, currentLcdMenu);
@@ -89,8 +89,9 @@ static int displayCursorOn(i2c_lcd1602_info_t *lcd_info, unsigned int itemToSele
     LCD_MENU displayedMenu = (*lcdMenus)[currentLcdMenu]; 
     LCD_MENU_ITEM currentItem = (*displayedMenu.items)[currentMenuItem];
     LCD_MENU_ITEM newItem = (*displayedMenu.items)[itemToSelect];
-    printf("newItem x: %d\n", newItem.xCoord);
-    printf("current x: %d\n", currentItem.xCoord);  
+
+    printf("Memory adress (without items): %p\n", &(*lcdMenus)[currentLcdMenu]);
+    printf("Memory adress (items): %p\n", &(*(*lcdMenus)[currentLcdMenu].items));
 
     //Check if item is valid
     if (itemToSelect > MAX_ITEMS_ON_MENU - 1 || newItem.id == 99)
@@ -133,7 +134,7 @@ static int displayMenu(i2c_lcd1602_info_t *lcd_info, unsigned int menuToDisplay)
         i2c_lcd1602_write_string(lcd_info, (*newMenu.items)[i].text);
     }
 
-    currentMenuItem = 0;
+    currentMenuItem = (*newMenu.items)[0].id;
     currentLcdMenu = newMenu.id;
     displayCursorOn(lcd_info, currentMenuItem);
 
