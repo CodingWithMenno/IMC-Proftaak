@@ -95,6 +95,8 @@ void test(void *p)
     i2c_lcd1602_write_string(lcd_info, "Starting...");
 
     menu_initMenus(lcd_info);
+    _wait_for_user();
+    menu_goToNextItem(lcd_info);
 
     vTaskDelete(NULL);
 }

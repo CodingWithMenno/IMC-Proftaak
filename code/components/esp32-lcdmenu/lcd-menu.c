@@ -3,6 +3,7 @@
 #include "smbus.h"
 #include "i2c-lcd1602.h"
 #include "lcd-menu.h"
+#include "esp_log.h"
 
 //Static functions
 static int displayMenu(i2c_lcd1602_info_t*, unsigned int);
@@ -27,10 +28,12 @@ int menu_initMenus(i2c_lcd1602_info_t *lcd_info)
     //Set the currentLcdMenu and currentMenuItem
     //Show the currentLcdMenu
 
+    //Hides the cursor
+    i2c_lcd1602_set_cursor(lcd_info, false);
 
     //Item to fill up the items if there are not enough items
-    LCD_MENU_ITEM nullItem;
-    nullItem.id = 99;
+    LCD_MENU_ITEM *nullItem = (LCD_MENU_ITEM*) malloc(sizeof(LCD_MENU_ITEM));
+    nullItem->id = 99;
 
     //Main menu
     LCD_MENU *mainMenu = (LCD_MENU*) malloc(sizeof(LCD_MENU));
@@ -40,22 +43,22 @@ int menu_initMenus(i2c_lcd1602_info_t *lcd_info)
     mainMenu->id = MAIN_MENU_ID;
     mainMenu->text = "MENU";
     mainMenu->xCoord = 8;
-    LCD_MENU_ITEM mainMenu_Radio;
-    mainMenu_Radio.id = 0;
-    mainMenu_Radio.text = "RADIO";
-    mainMenu_Radio.xCoord = 2;
-    mainMenu_Radio.yCoord = 2;
-    LCD_MENU_ITEM mainMenu_Clock;
-    mainMenu_Clock.id = 1;
-    mainMenu_Clock.text = "KLOK";
-    mainMenu_Clock.xCoord = 9;
-    mainMenu_Clock.yCoord = 2;
-    LCD_MENU_ITEM mainMenu_Echo;
-    mainMenu_Echo.id = 2;
-    mainMenu_Echo.text = "ECHO";
-    mainMenu_Echo.xCoord = 15;
-    mainMenu_Echo.yCoord = 2;
-    LCD_MENU_ITEM mainMenuItems[MAX_ITEMS_ON_MENU] = {mainMenu_Radio, mainMenu_Clock, mainMenu_Echo, nullItem};
+    LCD_MENU_ITEM *mainMenu_Radio = (LCD_MENU_ITEM*) malloc(sizeof(LCD_MENU_ITEM));
+    mainMenu_Radio->id = 0;
+    mainMenu_Radio->text = "RADIO";
+    mainMenu_Radio->xCoord = 2;
+    mainMenu_Radio->yCoord = 2;
+    LCD_MENU_ITEM *mainMenu_Clock = (LCD_MENU_ITEM*) malloc(sizeof(LCD_MENU_ITEM));
+    mainMenu_Clock->id = 1;
+    mainMenu_Clock->text = "KLOK";
+    mainMenu_Clock->xCoord = 9;
+    mainMenu_Clock->yCoord = 2;
+    LCD_MENU_ITEM *mainMenu_Echo = (LCD_MENU_ITEM*) malloc(sizeof(LCD_MENU_ITEM));
+    mainMenu_Echo->id = 2;
+    mainMenu_Echo->text = "ECHO";
+    mainMenu_Echo->xCoord = 15;
+    mainMenu_Echo->yCoord = 2;
+    LCD_MENU_ITEM mainMenuItems[MAX_ITEMS_ON_MENU] = {*mainMenu_Radio, *mainMenu_Clock, *mainMenu_Echo, *nullItem};
     mainMenu->items = &mainMenuItems;
 
 
@@ -70,44 +73,38 @@ int menu_initMenus(i2c_lcd1602_info_t *lcd_info)
 
     //Show the current menu
     displayMenu(lcd_info, currentLcdMenu);
-    displayCursorOn(lcd_info, currentMenuItem);
 
     return LCD_MENU_OKE;
 }
 
 int menu_goToNextItem(i2c_lcd1602_info_t *lcd_info)
 {
-    LCD_MENU displayedMenu = *lcdMenus[currentLcdMenu];
-    printf("\n\n%s\n\n", (*displayedMenu.items)[0].text);
-
-    return LCD_MENU_OKE;
+    return displayCursorOn(lcd_info, currentMenuItem + 1);
 }
 
 //Sets the user selector (cursor) on the given menu item
 static int displayCursorOn(i2c_lcd1602_info_t *lcd_info, unsigned int itemToSelect)
 {
-    //Get the current menu
-    LCD_MENU displayedMenu = *lcdMenus[currentLcdMenu];
+    //Get the current menu, item and next item
+    LCD_MENU displayedMenu = (*lcdMenus)[currentLcdMenu]; 
+    LCD_MENU_ITEM currentItem = (*displayedMenu.items)[currentMenuItem];
+    LCD_MENU_ITEM newItem = (*displayedMenu.items)[itemToSelect];
+    printf("newItem x: %d\n", newItem.xCoord);
+    printf("current x: %d\n", currentItem.xCoord);  
 
     //Check if item is valid
-    if (itemToSelect > MAX_ITEMS_ON_MENU - 1 || (*displayedMenu.items)[itemToSelect].id == 99)
+    if (itemToSelect > MAX_ITEMS_ON_MENU - 1 || newItem.id == 99)
         return LCD_MENU_ERROR;
 
-    //Activate the cursor
-    i2c_lcd1602_set_cursor(lcd_info, true);
-
     //Remove the old cursor
-    i2c_lcd1602_move_cursor(lcd_info, (*displayedMenu.items)[currentMenuItem].xCoord - 1, (*displayedMenu.items)[currentMenuItem].yCoord);
+    i2c_lcd1602_move_cursor(lcd_info, currentItem.xCoord - 1, currentItem.yCoord);
     i2c_lcd1602_write_char(lcd_info, ' ');
 
     //Place the new cursor
-    i2c_lcd1602_move_cursor(lcd_info, (*displayedMenu.items)[itemToSelect].xCoord - 1, (*displayedMenu.items)[itemToSelect].yCoord);
+    i2c_lcd1602_move_cursor(lcd_info, newItem.xCoord - 1, newItem.yCoord);
     i2c_lcd1602_write_char(lcd_info, '>');
 
     currentMenuItem = itemToSelect;
-
-    //Hide the cursor
-    i2c_lcd1602_set_cursor(lcd_info, false);
 
     return LCD_MENU_OKE;
 }
@@ -115,13 +112,11 @@ static int displayCursorOn(i2c_lcd1602_info_t *lcd_info, unsigned int itemToSele
 //Displays the given menu to the lcd
 static int displayMenu(i2c_lcd1602_info_t *lcd_info, unsigned int menuToDisplay)
 {
-    //Activate the cursor
-    i2c_lcd1602_set_cursor(lcd_info, true);
     //Clear the display
     i2c_lcd1602_clear(lcd_info);
 
     //Get the menu to display
-    LCD_MENU newMenu = *lcdMenus[menuToDisplay];
+    LCD_MENU newMenu = (*lcdMenus)[menuToDisplay];
 
     //Write the title of the menu to the screen
     i2c_lcd1602_move_cursor(lcd_info, newMenu.xCoord, 0);
@@ -137,9 +132,10 @@ static int displayMenu(i2c_lcd1602_info_t *lcd_info, unsigned int menuToDisplay)
         i2c_lcd1602_move_cursor(lcd_info, (*newMenu.items)[i].xCoord, (*newMenu.items)[i].yCoord);
         i2c_lcd1602_write_string(lcd_info, (*newMenu.items)[i].text);
     }
-    
-    //Hide the cursor
-    i2c_lcd1602_set_cursor(lcd_info, false);
+
+    currentMenuItem = 0;
+    currentLcdMenu = newMenu.id;
+    displayCursorOn(lcd_info, currentMenuItem);
 
     return LCD_MENU_OKE;
 }
