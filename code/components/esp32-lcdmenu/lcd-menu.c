@@ -19,11 +19,13 @@ static unsigned int currentMenuItem;
 
 int menu_initMenus(i2c_lcd1602_info_t *lcd_info)
 {
+    //TODO
     //Reserve memory for all the menu's
     //Init all the menu's with the right value's
     //Store all the menu's in the lcdMenus array
     //Set the currentLcdMenu and currentMenuItem
     //Show the currentLcdMenu
+
 
     //Item to fill up the items if there are not enough items
     LCD_MENU_ITEM nullItem;
@@ -61,6 +63,7 @@ int menu_initMenus(i2c_lcd1602_info_t *lcd_info)
     //Point the lcdMenus to the array of menu's
     lcdMenus = &menusArray;
 
+    //Set the current lcdMenu en item
     currentLcdMenu = lcdMenus[MAIN_MENU_ID]->id;
     currentMenuItem = lcdMenus[MAIN_MENU_ID]->items[0]->id;
 
@@ -88,6 +91,7 @@ static int displayMenu(i2c_lcd1602_info_t *lcd_info, unsigned int menuToDisplay)
     //Write each item on the screen
     for (int i = 0; i < MAX_ITEMS_ON_MENU; i++)
     {
+        //Check if item is valid (is not a nullItem)
         if ((*newMenu.items)[i].id == 99) 
             break;
 
