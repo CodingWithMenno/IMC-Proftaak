@@ -6,6 +6,7 @@
 
 //Static functions
 static int displayMenu(i2c_lcd1602_info_t*, unsigned int);
+static int displayCursorOn(i2c_lcd1602_info_t*, unsigned int);
 
 
 //Extern variable to all the menu's in the application
@@ -69,6 +70,36 @@ int menu_initMenus(i2c_lcd1602_info_t *lcd_info)
 
     //Show the current menu
     displayMenu(lcd_info, currentLcdMenu);
+    displayCursorOn(lcd_info, currentMenuItem);
+
+    return LCD_MENU_OKE;
+}
+
+//Sets the user selector (cursor) on the given menu item
+static int displayCursorOn(i2c_lcd1602_info_t *lcd_info, unsigned int itemToSelect)
+{
+    //Get the current menu
+    LCD_MENU displayedMenu = *lcdMenus[currentLcdMenu];
+
+    //Check if item is valid
+    if (itemToSelect > MAX_ITEMS_ON_MENU - 1 || (*displayedMenu.items)[itemToSelect].id == 99)
+        return LCD_MENU_ERROR;
+
+    //Activate the cursor
+    i2c_lcd1602_set_cursor(lcd_info, true);
+
+    //Remove the old cursor
+    i2c_lcd1602_move_cursor(lcd_info, (*displayedMenu.items)[currentMenuItem].xCoord - 1, (*displayedMenu.items)[currentMenuItem].yCoord);
+    i2c_lcd1602_write_char(lcd_info, ' ');
+
+    //Place the new cursor
+    i2c_lcd1602_move_cursor(lcd_info, (*displayedMenu.items)[itemToSelect].xCoord - 1, (*displayedMenu.items)[itemToSelect].yCoord);
+    i2c_lcd1602_write_char(lcd_info, '>');
+
+    currentMenuItem = itemToSelect;
+
+    //Hide the cursor
+    i2c_lcd1602_set_cursor(lcd_info, false);
 
     return LCD_MENU_OKE;
 }
@@ -91,7 +122,7 @@ static int displayMenu(i2c_lcd1602_info_t *lcd_info, unsigned int menuToDisplay)
     //Write each item on the screen
     for (int i = 0; i < MAX_ITEMS_ON_MENU; i++)
     {
-        //Check if item is valid (is not a nullItem)
+        //Check if item is valid (not a nullItem)
         if ((*newMenu.items)[i].id == 99) 
             break;
 
