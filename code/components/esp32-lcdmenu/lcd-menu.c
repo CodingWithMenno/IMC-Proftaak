@@ -66,11 +66,19 @@ int menu_initMenus(i2c_lcd1602_info_t *lcd_info)
 
     //Set the current lcdMenu en item
     currentLcdMenu = lcdMenus[MAIN_MENU_ID]->id;
-    currentMenuItem = lcdMenus[MAIN_MENU_ID]->items[0]->id;
+    currentMenuItem = (*lcdMenus[MAIN_MENU_ID]->items)[0].id;
 
     //Show the current menu
     displayMenu(lcd_info, currentLcdMenu);
     displayCursorOn(lcd_info, currentMenuItem);
+
+    return LCD_MENU_OKE;
+}
+
+int menu_goToNextItem(i2c_lcd1602_info_t *lcd_info)
+{
+    LCD_MENU displayedMenu = *lcdMenus[currentLcdMenu];
+    printf("\n\n%s\n\n", (*displayedMenu.items)[0].text);
 
     return LCD_MENU_OKE;
 }
