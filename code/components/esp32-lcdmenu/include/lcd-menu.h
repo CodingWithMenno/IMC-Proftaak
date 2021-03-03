@@ -79,16 +79,4 @@ Function to set the cursor to the previous item in the menu
 */
 int menu_goToPreviousitem(i2c_lcd1602_info_t*);
 
-
-
-//OPTIONAL FUNCTIONS
-
-/*
-Function to switch between menu's
-
--Returns:       a LCD_MENU error code
--Parameters:    ID of next menu
-*/
-int menu_switchMenu(unsigned int);
-
 #endif

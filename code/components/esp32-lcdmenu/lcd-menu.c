@@ -22,11 +22,13 @@ static unsigned int currentMenuItem;
 int menu_initMenus(i2c_lcd1602_info_t *lcd_info)
 {
     //TODO
-    //Reserve memory for all the menu's
-    //Init all the menu's with the right value's
-    //Store all the menu's in the lcdMenus array
-    //Set the currentLcdMenu and currentMenuItem
-    //Show the currentLcdMenu
+    /*
+    -lcdMenus word een LCD_MENU* (dat is namelijk op zich zelf al een array)
+    -LCD_MENU.items word een LCD_MENU_ITEM*
+    -Onnodige memory allocations weghalen (static en externe variabelen worden al over het gehele programma onthouden)
+    -Code mooi maken/versimpelen
+    -LCD_MENU_ITEM zo aanpassen dat het ook andere dingen kunnen zijn dan knoppen
+    */
 
     //Hides the cursor
     i2c_lcd1602_set_cursor(lcd_info, false);
@@ -69,7 +71,6 @@ int menu_initMenus(i2c_lcd1602_info_t *lcd_info)
 
     //Set the current lcdMenu en item
     currentLcdMenu = (*lcdMenus)[MAIN_MENU_ID].id;
-    // currentMenuItem = (*(*lcdMenus)[MAIN_MENU_ID].items)[1].id;
 
     //Show the current menu
     displayMenu(lcd_info, currentLcdMenu);
