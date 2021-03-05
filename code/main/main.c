@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "esp_system.h"
@@ -29,6 +30,10 @@
 #define LCD_NUM_ROWS			 4
 #define LCD_NUM_COLUMNS			 40
 #define LCD_NUM_VIS_COLUMNS		 20
+
+void onEncoderPressed();
+void onEncoderClicked();
+void onEncoderMoved(int16_t);
 
 static void i2c_master_init(void)
 {
@@ -70,50 +75,85 @@ void test(void *p)
     // Set up I2C
     i2c_master_init();
     i2c_port_t i2c_num = I2C_MASTER_NUM;
-    uint8_t address = CONFIG_LCD1602_I2C_ADDRESS;
-
+    //uint8_t address = CONFIG_LCD1602_I2C_ADDRESS;
+    
 
     // Set up the SMBus
     smbus_info_t * smbus_info = smbus_malloc();
-    smbus_init(smbus_info, i2c_num, address);
-    smbus_set_timeout(smbus_info, 1000 / portTICK_RATE_MS);
+    //smbus_init(smbus_info, i2c_num, address);
+    //smbus_set_timeout(smbus_info, 1000 / portTICK_RATE_MS);
 
-    // Set up the LCD1602 device with backlight off
-    i2c_lcd1602_info_t * lcd_info = i2c_lcd1602_malloc();
-    i2c_lcd1602_init(lcd_info, smbus_info, true, LCD_NUM_ROWS, LCD_NUM_COLUMNS, LCD_NUM_VIS_COLUMNS);
+    // // Set up the LCD1602 device with backlight off
+    // i2c_lcd1602_info_t * lcd_info = i2c_lcd1602_malloc();
+    // i2c_lcd1602_init(lcd_info, smbus_info, true, LCD_NUM_ROWS, LCD_NUM_COLUMNS, LCD_NUM_VIS_COLUMNS);
 
-    ESP_LOGI(TAG, "cursor on");
-    _wait_for_user();
-    i2c_lcd1602_set_cursor(lcd_info, true);
+    // ESP_LOGI(TAG, "cursor on");
+    // _wait_for_user();
+    // i2c_lcd1602_set_cursor(lcd_info, true);
 
-    ESP_LOGI(TAG, "write text at 0,0");
-    _wait_for_user();
-    i2c_lcd1602_move_cursor(lcd_info, 0, 0);
-    // i2c_lcd1602_write_char(lcd_info, 'H');
-    // i2c_lcd1602_move_cursor(lcd_info, 1, 0);
-    // i2c_lcd1602_write_char(lcd_info, 'O');
-    // i2c_lcd1602_move_cursor(lcd_info, 1, 0);
-    // i2c_lcd1602_write_char(lcd_info, 'I');
-    i2c_lcd1602_write_string(lcd_info, "Hoi");
+    // ESP_LOGI(TAG, "write text at 0,0");
+    // _wait_for_user();
+    // i2c_lcd1602_move_cursor(lcd_info, 0, 0);
+    // // i2c_lcd1602_write_char(lcd_info, 'H');
+    // // i2c_lcd1602_move_cursor(lcd_info, 1, 0);
+    // // i2c_lcd1602_write_char(lcd_info, 'O');
+    // // i2c_lcd1602_move_cursor(lcd_info, 1, 0);
+    // // i2c_lcd1602_write_char(lcd_info, 'I');
+    // i2c_lcd1602_write_string(lcd_info, "Hoi");
 
 
     //Rotary testing
-    qwiic_twist_t qwiic_info;
+    qwiic_twist_t *qwiic_info = (qwiic_twist_t*)malloc(sizeof(qwiic_twist_t));
 
-    qwiic_info.smbus_info = smbus_info;
-    qwiic_info.i2c_addr = QWIIC_TWIST_ADDRESS;
-    qwiic_info.port = i2c_num;
+    qwiic_info->smbus_info = smbus_info;
+    qwiic_info->i2c_addr = QWIIC_TWIST_ADDRESS;
+    qwiic_info->port = i2c_num;
+    qwiic_info->xMutex = xSemaphoreCreateMutex();
+    qwiic_info->task_enabled = true;
+    qwiic_info->task_time = 0;
+    qwiic_info->onButtonPressed = &onEncoderPressed;
+    qwiic_info->onButtonClicked = &onEncoderClicked;
+    qwiic_info->onMoved = &onEncoderMoved;
     
     qwiic_twist_init(qwiic_info);
-    
+    qwiic_twist_start_task(qwiic_info);
+
+    //RotaryEncoder_init();
 
     while (1)
     {
+        
         /* code */
+        // uint16_t data = 1;
+        // RotaryEncoder_getDiff(&data);
+        // printf("%d", data);
+
         _wait_for_user();
     }
-    
 }
+
+void onEncoderPressed()
+{
+    printf("Encoder Pressed\n");
+}
+
+void onEncoderClicked()
+{
+    printf("Encoder clicked\n");
+}
+
+void onEncoderMoved(int16_t diff)
+{
+    if(diff>0)
+    {
+            printf("Encoder Moved: right\n");
+    } else 
+    {
+            printf("Encoder Moved: left\n");
+    }
+}
+
+
 
 void app_main()
 {
