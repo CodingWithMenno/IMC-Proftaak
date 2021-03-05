@@ -26,6 +26,8 @@ typedef struct
     unsigned int id;
     unsigned int xCoord; //Where to start to write the text
     char text[MAX_TEXT_LENGTH];
+    void (*menuEnter)(void);
+    void (*menuExit)(void);
     LCD_MENU_ITEM *items; //Pointer to the menu items
     unsigned int parent; //ID to the parent LCD_MENU
 } LCD_MENU;

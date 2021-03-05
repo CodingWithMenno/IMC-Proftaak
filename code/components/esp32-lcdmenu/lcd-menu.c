@@ -15,7 +15,12 @@
 //Static functions
 static int displayMenu(i2c_lcd1602_info_t*, unsigned int);
 static int displayCursorOn(i2c_lcd1602_info_t*, unsigned int);
+
 static void onClickMainEcho(i2c_lcd1602_info_t*);
+static void onEnterMain();
+static void onExitMain();
+static void onEnterEcho();
+static void onExitEcho();
 
 //Extern variable to all the menu's in the application
 LCD_MENU *lcdMenus;
@@ -101,6 +106,14 @@ static int displayMenu(i2c_lcd1602_info_t *lcd_info, unsigned int menuToDisplay)
         i2c_lcd1602_move_cursor(lcd_info, newMenu.items[i].xCoord, newMenu.items[i].yCoord);
         i2c_lcd1602_write_string(lcd_info, newMenu.items[i].text);
     }
+
+    //Perform the exit function of the old menu
+    if (currentLcdMenu != INVALID && lcdMenus[currentLcdMenu].menuExit != NULL)
+        lcdMenus[currentLcdMenu].menuExit();
+
+    //Perform the init function of the new menu
+    if (newMenu.menuEnter != NULL)
+        newMenu.menuEnter();
     
     currentMenuItem = newMenu.items[0].id;
     currentLcdMenu = newMenu.id;
@@ -123,6 +136,8 @@ int menu_initMenus(i2c_lcd1602_info_t *lcd_info)
     strcpy(lcdMenus[MAIN_MENU_ID].text, "MENU");
     lcdMenus[MAIN_MENU_ID].xCoord = 8;
     lcdMenus[MAIN_MENU_ID].parent = INVALID;
+    lcdMenus[MAIN_MENU_ID].menuEnter = &onEnterMain;
+    lcdMenus[MAIN_MENU_ID].menuExit = &onExitMain;
     lcdMenus[MAIN_MENU_ID].items = (LCD_MENU_ITEM*) malloc(sizeof(LCD_MENU_ITEM) * MAX_ITEMS_ON_MENU);
     if (lcdMenus[MAIN_MENU_ID].items == NULL)
     {
@@ -158,6 +173,8 @@ int menu_initMenus(i2c_lcd1602_info_t *lcd_info)
     strcpy(lcdMenus[ECHO_MENU_ID].text, "MENU");
     lcdMenus[ECHO_MENU_ID].xCoord = 8;
     lcdMenus[ECHO_MENU_ID].parent = MAIN_MENU_ID;
+    lcdMenus[ECHO_MENU_ID].menuEnter = &onEnterEcho;
+    lcdMenus[ECHO_MENU_ID].menuExit = &onExitEcho;
     lcdMenus[ECHO_MENU_ID].items = (LCD_MENU_ITEM*) malloc(sizeof(LCD_MENU_ITEM) * MAX_ITEMS_ON_MENU);
     if (lcdMenus[ECHO_MENU_ID].items == NULL)
     {
@@ -183,16 +200,40 @@ int menu_initMenus(i2c_lcd1602_info_t *lcd_info)
     itemsEchoMenu[2].id = INVALID;
 
 
-    //Set the current lcd menu and display it on the lcd
-    currentLcdMenu = MAIN_MENU_ID;
-    return displayMenu(lcd_info, currentLcdMenu);
+    //Display the main menu
+    //currentLcdMenu = MAIN_MENU_ID;
+    currentLcdMenu = INVALID;
+    return displayMenu(lcd_info, MAIN_MENU_ID);
 }
 
 
 
-//From here onClick functions
+//From here onClick, init and exit functions
+
+//Main menu
+static void onEnterMain()
+{
+    printf("Entered the main menu\n");
+}
+
+static void onExitMain()
+{
+    printf("Exited the main menu\n");
+}
 
 static void onClickMainEcho(i2c_lcd1602_info_t* lcd_info)
 {
     displayMenu(lcd_info, ECHO_MENU_ID);
+}
+
+
+//Echo menu
+static void onEnterEcho()
+{
+    printf("Entered the echo menu\n");
+}
+
+static void onExitEcho()
+{
+    printf("Exited the echo menu\n");
 }
