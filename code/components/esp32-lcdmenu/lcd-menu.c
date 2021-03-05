@@ -159,6 +159,9 @@ int menu_initMenus(i2c_lcd1602_info_t *lcd_info)
     //Hides the cursor
     i2c_lcd1602_set_cursor(lcd_info, false);
 
+    //Custom white rectangle
+    uint8_t rectangle[8] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
+    i2c_lcd1602_define_char(lcd_info, I2C_LCD1602_CHARACTER_CUSTOM_0 , rectangle);
 
     //Allocate memory for each menu
     lcdMenus = (LCD_MENU*) malloc(sizeof(LCD_MENU) * TOTAL_MENUS);
@@ -304,28 +307,28 @@ static void doFancyAnimation(i2c_lcd1602_info_t* lcd_info)
     i2c_lcd1602_move_cursor(lcd_info, 0, 0);
     for(int i = 0; i < 20; i++)
     {
-        i2c_lcd1602_write_char(lcd_info, '+');
+        i2c_lcd1602_write_char(lcd_info, I2C_LCD1602_CHARACTER_CUSTOM_0);
         vTaskDelay(15 / portTICK_RATE_MS);
     }
     i2c_lcd1602_move_cursor(lcd_info, 19, 1);
     i2c_lcd1602_set_right_to_left(lcd_info);
     for(int i = 0; i < 20; i++)
     {
-        i2c_lcd1602_write_char(lcd_info, '+');
+        i2c_lcd1602_write_char(lcd_info, I2C_LCD1602_CHARACTER_CUSTOM_0);
         vTaskDelay(15 / portTICK_RATE_MS);
     }
     i2c_lcd1602_move_cursor(lcd_info, 0, 2);
     i2c_lcd1602_set_left_to_right(lcd_info);
     for(int i = 0; i < 20; i++)
     {
-        i2c_lcd1602_write_char(lcd_info, '+');
+        i2c_lcd1602_write_char(lcd_info, I2C_LCD1602_CHARACTER_CUSTOM_0);
         vTaskDelay(15 / portTICK_RATE_MS);
     }
     i2c_lcd1602_move_cursor(lcd_info, 19, 3);
     i2c_lcd1602_set_right_to_left(lcd_info);
     for(int i = 0; i < 20; i++)
     {
-        i2c_lcd1602_write_char(lcd_info, '+');
+        i2c_lcd1602_write_char(lcd_info, I2C_LCD1602_CHARACTER_CUSTOM_0);
         vTaskDelay(15 / portTICK_RATE_MS);
     }
     i2c_lcd1602_set_left_to_right(lcd_info);
