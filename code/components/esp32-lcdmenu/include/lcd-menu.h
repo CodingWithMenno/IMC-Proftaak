@@ -5,19 +5,17 @@
 #define LCD_MENU_OKE 0
 #define LCD_MENU_ERROR 1
 
-//ID's of every lcd menu (is also the number in the lcdMenus array)
-#define MAIN_MENU_ID 0
-
 //Some constants for the lcd menu's
 #define TOTAL_MENUS 6
 #define MAX_ITEMS_ON_MENU 4
+#define MAX_TEXT_LENGTH 8
 
 //A struct for a menu item
 typedef struct
 {
     unsigned int id;
-    char *text;
-    void (*onClick)(void);
+    char text[MAX_TEXT_LENGTH];
+    void (*onClick)(i2c_lcd1602_info_t*);
     unsigned int xCoord;  //Where to start to write the text
     unsigned int yCoord;  //Where to start to write the text
 } LCD_MENU_ITEM;
@@ -27,15 +25,15 @@ typedef struct menu
 {
     unsigned int id;
     unsigned int xCoord; //Where to start to write the text
-    char *text;
+    char text[MAX_TEXT_LENGTH];
     void (*menuInit)(void);
     void (*menuExit)(void);
     unsigned int menuPointers[MAX_ITEMS_ON_MENU]; //Points to the id of the next possible menu's
-    LCD_MENU_ITEM (*items)[MAX_ITEMS_ON_MENU]; //Pointer to an array of menu items
+    LCD_MENU_ITEM *items; //Pointer to the menu items
 } LCD_MENU;
 
-//Pointer to an array of all the menu's
-extern LCD_MENU (*lcdMenus)[TOTAL_MENUS];
+//Pointer to the menu's
+extern LCD_MENU *lcdMenus;
 
 
 /*
