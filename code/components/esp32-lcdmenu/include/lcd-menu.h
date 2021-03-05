@@ -21,15 +21,13 @@ typedef struct
 } LCD_MENU_ITEM;
 
 //A struct for a menu
-typedef struct menu
+    typedef struct menu
 {
     unsigned int id;
     unsigned int xCoord; //Where to start to write the text
     char text[MAX_TEXT_LENGTH];
-    void (*menuInit)(void);
-    void (*menuExit)(void);
-    unsigned int menuPointers[MAX_ITEMS_ON_MENU]; //Points to the id of the next possible menu's
     LCD_MENU_ITEM *items; //Pointer to the menu items
+    unsigned int parent; //ID to the parent LCD_MENU
 } LCD_MENU;
 
 //Pointer to the menu's
@@ -45,12 +43,12 @@ Call this method to init all the menu's
 int menu_initMenus(i2c_lcd1602_info_t*);
 
 /*
-Function to go back to the previous menu
+Function to go to the parent menu of the current menu
 
 -Returns:       a LCD_MENU error code
 -Parameters:    a pointer to the lcd info
 */
-int menu_goBackAMenu(i2c_lcd1602_info_t*);
+int menu_goToParentMenu(i2c_lcd1602_info_t*);
 
 /*
 Function to start the action (the onClick() function) of

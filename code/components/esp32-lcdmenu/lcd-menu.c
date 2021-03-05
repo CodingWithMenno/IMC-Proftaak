@@ -10,6 +10,8 @@
 #define MAIN_MENU_ID 0
 #define ECHO_MENU_ID 1
 
+#define INVALID 99
+
 //Static functions
 static int displayMenu(i2c_lcd1602_info_t*, unsigned int);
 static int displayCursorOn(i2c_lcd1602_info_t*, unsigned int);
@@ -23,6 +25,14 @@ static unsigned int currentLcdMenu;
 //The current selected menu item in the current menu
 static unsigned int currentMenuItem;
 
+
+int menu_goToParentMenu(i2c_lcd1602_info_t *lcd_info)
+{
+    if (lcdMenus[currentLcdMenu].parent == INVALID)
+        return LCD_MENU_ERROR;
+    
+    return displayMenu(lcd_info, lcdMenus[currentLcdMenu].parent);
+}
 
 int menu_doActionCurrentItem(i2c_lcd1602_info_t *lcd_info)
 {
@@ -51,7 +61,7 @@ static int displayCursorOn(i2c_lcd1602_info_t *lcd_info, unsigned int itemToSele
     LCD_MENU_ITEM newItem = displayedMenu.items[itemToSelect];
 
     //Check if itemToSelect is valid
-    if (itemToSelect > MAX_ITEMS_ON_MENU - 1 || newItem.id == 99)
+    if (itemToSelect > MAX_ITEMS_ON_MENU - 1 || newItem.id == INVALID)
         return LCD_MENU_ERROR;
     
     //Remove the old cursor
@@ -84,7 +94,7 @@ static int displayMenu(i2c_lcd1602_info_t *lcd_info, unsigned int menuToDisplay)
     for (int i = 0; i < MAX_ITEMS_ON_MENU; i++)
     {
         //Check if item is valid
-        if (newMenu.items[i].id == 99) 
+        if (newMenu.items[i].id == INVALID) 
             break;
 
         //Write the item on the screen
@@ -112,6 +122,7 @@ int menu_initMenus(i2c_lcd1602_info_t *lcd_info)
     lcdMenus[MAIN_MENU_ID].id = MAIN_MENU_ID;
     strcpy(lcdMenus[MAIN_MENU_ID].text, "MENU");
     lcdMenus[MAIN_MENU_ID].xCoord = 8;
+    lcdMenus[MAIN_MENU_ID].parent = INVALID;
     lcdMenus[MAIN_MENU_ID].items = (LCD_MENU_ITEM*) malloc(sizeof(LCD_MENU_ITEM) * MAX_ITEMS_ON_MENU);
     if (lcdMenus[MAIN_MENU_ID].items == NULL)
     {
@@ -139,13 +150,14 @@ int menu_initMenus(i2c_lcd1602_info_t *lcd_info)
     itemsMainMenu[2].yCoord = 2;
     itemsMainMenu[2].onClick = &onClickMainEcho;
     //Fill-up item
-    itemsMainMenu[3].id = 99;
+    itemsMainMenu[3].id = INVALID;
 
 
     //Echo menu
     lcdMenus[ECHO_MENU_ID].id = ECHO_MENU_ID;
     strcpy(lcdMenus[ECHO_MENU_ID].text, "MENU");
     lcdMenus[ECHO_MENU_ID].xCoord = 8;
+    lcdMenus[ECHO_MENU_ID].parent = MAIN_MENU_ID;
     lcdMenus[ECHO_MENU_ID].items = (LCD_MENU_ITEM*) malloc(sizeof(LCD_MENU_ITEM) * MAX_ITEMS_ON_MENU);
     if (lcdMenus[ECHO_MENU_ID].items == NULL)
     {
@@ -168,7 +180,7 @@ int menu_initMenus(i2c_lcd1602_info_t *lcd_info)
     itemsEchoMenu[1].yCoord = 2;
     itemsEchoMenu[1].onClick = NULL;
     //Fill-up item
-    itemsEchoMenu[2].id = 99;
+    itemsEchoMenu[2].id = INVALID;
 
 
     //Set the current lcd menu and display it on the lcd
@@ -182,6 +194,5 @@ int menu_initMenus(i2c_lcd1602_info_t *lcd_info)
 
 static void onClickMainEcho(i2c_lcd1602_info_t* lcd_info)
 {
-    printf("Clicked on Echo button in Main menu\n");
     displayMenu(lcd_info, ECHO_MENU_ID);
 }

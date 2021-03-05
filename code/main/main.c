@@ -101,6 +101,8 @@ void test(void *p)
     menu_goToNextItem(lcd_info);
     _wait_for_user();
     menu_doActionCurrentItem(lcd_info);
+    _wait_for_user();
+    menu_goToParentMenu(lcd_info);
 
     vTaskDelete(NULL);
 }
