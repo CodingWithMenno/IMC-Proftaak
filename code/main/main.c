@@ -11,6 +11,7 @@
 #include "smbus.h"
 #include "i2c-lcd1602.h"
 #include "lcd-menu.h"
+#include "qwiic_twist.h"
 
 
 #define TAG "app"
@@ -71,6 +72,7 @@ void test(void *p)
     i2c_port_t i2c_num = I2C_MASTER_NUM;
     uint8_t address = CONFIG_LCD1602_I2C_ADDRESS;
 
+
     // Set up the SMBus
     smbus_info_t * smbus_info = smbus_malloc();
     smbus_init(smbus_info, i2c_num, address);
@@ -94,9 +96,21 @@ void test(void *p)
     // i2c_lcd1602_write_char(lcd_info, 'I');
     i2c_lcd1602_write_string(lcd_info, "Hoi");
 
+
+    //Rotary testing
+    qwiic_twist_t qwiic_info;
+
+    qwiic_info.smbus_info = smbus_info;
+    qwiic_info.i2c_addr = QWIIC_TWIST_ADDRESS;
+    qwiic_info.port = i2c_num;
+    
+    qwiic_twist_init(qwiic_info);
+    
+
     while (1)
     {
         /* code */
+        _wait_for_user();
     }
     
 }
@@ -104,5 +118,7 @@ void test(void *p)
 void app_main()
 {
     xTaskCreate(&test, "lcd1602_task", 4096, NULL, 5, NULL);
+    
 }
+
 
