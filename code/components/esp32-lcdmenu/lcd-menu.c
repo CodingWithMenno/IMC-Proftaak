@@ -14,6 +14,7 @@
 
 //Static functions
 static int displayMenu(i2c_lcd1602_info_t*, unsigned int);
+static int refreshMenu(i2c_lcd1602_info_t*, unsigned int, unsigned int);
 static int displayCursorOn(i2c_lcd1602_info_t*, unsigned int);
 
 static void onClickMainEcho(i2c_lcd1602_info_t*);
@@ -85,6 +86,24 @@ static int displayCursorOn(i2c_lcd1602_info_t *lcd_info, unsigned int itemToSele
 //Displays the given menu to the lcd
 static int displayMenu(i2c_lcd1602_info_t *lcd_info, unsigned int menuToDisplay)
 {
+    //Get the menu to display
+    LCD_MENU newMenu = lcdMenus[menuToDisplay];
+
+    //Perform the exit function of the old menu
+    if (currentLcdMenu != INVALID && lcdMenus[currentLcdMenu].menuExit != NULL)
+        lcdMenus[currentLcdMenu].menuExit();
+
+    //Perform the init function of the new menu
+    if (newMenu.menuEnter != NULL)
+        newMenu.menuEnter();
+
+    currentMenuItem = newMenu.items[0].id;
+    currentLcdMenu = newMenu.id;
+    return refreshMenu(lcd_info, menuToDisplay, currentMenuItem);
+}
+
+static int refreshMenu(i2c_lcd1602_info_t *lcd_info, unsigned int menuToDisplay, unsigned int selectedItem)
+{
     //Clear the display
     i2c_lcd1602_clear(lcd_info);
 
@@ -107,17 +126,7 @@ static int displayMenu(i2c_lcd1602_info_t *lcd_info, unsigned int menuToDisplay)
         i2c_lcd1602_write_string(lcd_info, newMenu.items[i].text);
     }
 
-    //Perform the exit function of the old menu
-    if (currentLcdMenu != INVALID && lcdMenus[currentLcdMenu].menuExit != NULL)
-        lcdMenus[currentLcdMenu].menuExit();
-
-    //Perform the init function of the new menu
-    if (newMenu.menuEnter != NULL)
-        newMenu.menuEnter();
-    
-    currentMenuItem = newMenu.items[0].id;
-    currentLcdMenu = newMenu.id;
-    return displayCursorOn(lcd_info, currentMenuItem);
+    return displayCursorOn(lcd_info, selectedItem);
 }
 
 int menu_initMenus(i2c_lcd1602_info_t *lcd_info)
@@ -201,7 +210,6 @@ int menu_initMenus(i2c_lcd1602_info_t *lcd_info)
 
 
     //Display the main menu
-    //currentLcdMenu = MAIN_MENU_ID;
     currentLcdMenu = INVALID;
     return displayMenu(lcd_info, MAIN_MENU_ID);
 }
