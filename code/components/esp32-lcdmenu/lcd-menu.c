@@ -9,6 +9,7 @@
 //ID's of every lcd menu (is also the number in the lcdMenus array)
 #define MAIN_MENU_ID 0
 #define ECHO_MENU_ID 1
+#define RADIO_MENU_ID 2
 
 #define INVALID 99
 
@@ -18,10 +19,13 @@ static int refreshMenu(i2c_lcd1602_info_t*, unsigned int, unsigned int);
 static int displayCursorOn(i2c_lcd1602_info_t*, unsigned int);
 
 static void onClickMainEcho(i2c_lcd1602_info_t*);
+static void onClickMainRadio(i2c_lcd1602_info_t*);
 static void onEnterMain();
 static void onExitMain();
 static void onEnterEcho();
 static void onExitEcho();
+static void onEnterRadio();
+static void onExitRadio();
 
 //Extern variable to all the menu's in the application
 LCD_MENU *lcdMenus;
@@ -160,7 +164,7 @@ int menu_initMenus(i2c_lcd1602_info_t *lcd_info)
     strcpy(itemsMainMenu[0].text, "RADIO");
     itemsMainMenu[0].xCoord = 2;
     itemsMainMenu[0].yCoord = 2;
-    itemsMainMenu[0].onClick = NULL;
+    itemsMainMenu[0].onClick = &onClickMainRadio;
     //Clock item
     itemsMainMenu[1].id = 1;
     strcpy(itemsMainMenu[1].text, "KLOK");
@@ -209,6 +213,33 @@ int menu_initMenus(i2c_lcd1602_info_t *lcd_info)
     itemsEchoMenu[2].id = INVALID;
 
 
+    //Radio menu
+    lcdMenus[RADIO_MENU_ID].id = RADIO_MENU_ID;
+    strcpy(lcdMenus[RADIO_MENU_ID].text, "RADIO");
+    lcdMenus[RADIO_MENU_ID].xCoord = 7;
+    lcdMenus[RADIO_MENU_ID].parent = MAIN_MENU_ID;
+    lcdMenus[RADIO_MENU_ID].menuEnter = &onEnterRadio;
+    lcdMenus[RADIO_MENU_ID].menuExit = &onExitRadio;
+    lcdMenus[RADIO_MENU_ID].items = (LCD_MENU_ITEM*) malloc(sizeof(LCD_MENU_ITEM) * MAX_ITEMS_ON_MENU);
+    if (lcdMenus[RADIO_MENU_ID].items == NULL)
+    {
+        free(lcdMenus);
+        free(lcdMenus[MAIN_MENU_ID].items);
+        free(lcdMenus[ECHO_MENU_ID].items);
+        return LCD_MENU_ERROR;
+    }
+
+    LCD_MENU_ITEM *itemsRadioMenu = lcdMenus[RADIO_MENU_ID].items;
+    //Radio item
+    itemsRadioMenu[0].id = 0;
+    strcpy(itemsRadioMenu[0].text, "kanaal");
+    itemsRadioMenu[0].xCoord = 7;
+    itemsRadioMenu[0].yCoord = 2;
+    itemsRadioMenu[0].onClick = NULL;
+    //Fill-up item
+    itemsRadioMenu[1].id = INVALID;
+
+
     //Display the main menu
     currentLcdMenu = INVALID;
     return displayMenu(lcd_info, MAIN_MENU_ID);
@@ -234,6 +265,11 @@ static void onClickMainEcho(i2c_lcd1602_info_t* lcd_info)
     displayMenu(lcd_info, ECHO_MENU_ID);
 }
 
+static void onClickMainRadio(i2c_lcd1602_info_t* lcd_info)
+{
+    displayMenu(lcd_info, RADIO_MENU_ID);
+}
+
 
 //Echo menu
 static void onEnterEcho()
@@ -244,4 +280,15 @@ static void onEnterEcho()
 static void onExitEcho()
 {
     printf("Exited the echo menu\n");
+}
+
+//Radio menu
+static void onEnterRadio()
+{
+    printf("Entered the radio menu\n");
+}
+
+static void onExitRadio()
+{
+    printf("Exited the radio menu\n");
 }

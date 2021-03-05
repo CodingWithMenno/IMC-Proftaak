@@ -21,7 +21,7 @@ typedef struct
 } LCD_MENU_ITEM;
 
 //A struct for a menu
-    typedef struct menu
+typedef struct menu
 {
     unsigned int id;
     unsigned int xCoord; //Where to start to write the text
