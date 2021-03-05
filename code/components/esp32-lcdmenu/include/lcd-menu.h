@@ -27,14 +27,19 @@ typedef struct menu
     unsigned int xCoord; //Where to start to write the text
     char text[MAX_TEXT_LENGTH];
     void (*menuEnter)(void);
+    void (*update)(void*); 
     void (*menuExit)(void);
     LCD_MENU_ITEM *items; //Pointer to the menu items
     unsigned int parent; //ID to the parent LCD_MENU
 } LCD_MENU;
 
-//Pointer to the menu's
-extern LCD_MENU *lcdMenus;
+/*
+Call this method to update the current lcd menu
 
+-Returns:       a LCD_MENU error code
+-Parameters:    a pointer to the lcd info, a generic value     
+*/
+int menu_updateMenu(i2c_lcd1602_info_t*, void*);
 
 /*
 Call this method to init all the menu's
@@ -59,7 +64,7 @@ the current selected item on the current menu
 -Returns:       A LCD_MENU error code
 -Parameters:    a pointer to the lcd info
 */
-int menu_doActionCurrentItem(i2c_lcd1602_info_t*);
+int menu_onClick(i2c_lcd1602_info_t*);
 
 /*
 Function to set the cursor to the next item in the menu

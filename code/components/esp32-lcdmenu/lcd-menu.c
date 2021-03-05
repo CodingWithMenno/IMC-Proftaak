@@ -10,6 +10,7 @@
 #define MAIN_MENU_ID 0
 #define ECHO_MENU_ID 1
 #define RADIO_MENU_ID 2
+#define CLOCK_MENU_ID 3
 
 #define INVALID 99
 
@@ -20,21 +21,38 @@ static int displayCursorOn(i2c_lcd1602_info_t*, unsigned int);
 
 static void onClickMainEcho(i2c_lcd1602_info_t*);
 static void onClickMainRadio(i2c_lcd1602_info_t*);
+static void onClickMainClock(i2c_lcd1602_info_t*);
+
 static void onEnterMain();
 static void onExitMain();
+
 static void onEnterEcho();
 static void onExitEcho();
+
 static void onEnterRadio();
 static void onExitRadio();
 
-//Extern variable to all the menu's in the application
-LCD_MENU *lcdMenus;
+static void onEnterClock();
+static void onUpdateClock(void*);
+static void onExitClock();
 
+
+//Variable to all the menu's in the application
+static LCD_MENU *lcdMenus;
 //Variable to the current lcd menu
 static unsigned int currentLcdMenu;
 //The current selected menu item in the current menu
 static unsigned int currentMenuItem;
 
+
+int menu_updateMenu(i2c_lcd1602_info_t *lcd_info, void *p)
+{
+    if (lcdMenus[currentLcdMenu].update == NULL)
+        return LCD_MENU_ERROR;
+    
+    lcdMenus[currentLcdMenu].update(p);
+    return refreshMenu(lcd_info, currentLcdMenu, currentMenuItem);
+}
 
 int menu_goToParentMenu(i2c_lcd1602_info_t *lcd_info)
 {
@@ -44,7 +62,7 @@ int menu_goToParentMenu(i2c_lcd1602_info_t *lcd_info)
     return displayMenu(lcd_info, lcdMenus[currentLcdMenu].parent);
 }
 
-int menu_doActionCurrentItem(i2c_lcd1602_info_t *lcd_info)
+int menu_onClick(i2c_lcd1602_info_t *lcd_info)
 {
     if (lcdMenus[currentLcdMenu].items[currentMenuItem].onClick == NULL)
         return LCD_MENU_ERROR;
@@ -150,6 +168,7 @@ int menu_initMenus(i2c_lcd1602_info_t *lcd_info)
     lcdMenus[MAIN_MENU_ID].xCoord = 8;
     lcdMenus[MAIN_MENU_ID].parent = INVALID;
     lcdMenus[MAIN_MENU_ID].menuEnter = &onEnterMain;
+    lcdMenus[MAIN_MENU_ID].update = NULL;
     lcdMenus[MAIN_MENU_ID].menuExit = &onExitMain;
     lcdMenus[MAIN_MENU_ID].items = (LCD_MENU_ITEM*) malloc(sizeof(LCD_MENU_ITEM) * MAX_ITEMS_ON_MENU);
     if (lcdMenus[MAIN_MENU_ID].items == NULL)
@@ -170,7 +189,7 @@ int menu_initMenus(i2c_lcd1602_info_t *lcd_info)
     strcpy(itemsMainMenu[1].text, "KLOK");
     itemsMainMenu[1].xCoord = 9;
     itemsMainMenu[1].yCoord = 2;
-    itemsMainMenu[1].onClick = NULL;
+    itemsMainMenu[1].onClick = &onClickMainClock;
     //Echo item
     itemsMainMenu[2].id = 2;
     strcpy(itemsMainMenu[2].text, "ECHO");
@@ -187,6 +206,7 @@ int menu_initMenus(i2c_lcd1602_info_t *lcd_info)
     lcdMenus[ECHO_MENU_ID].xCoord = 8;
     lcdMenus[ECHO_MENU_ID].parent = MAIN_MENU_ID;
     lcdMenus[ECHO_MENU_ID].menuEnter = &onEnterEcho;
+    lcdMenus[ECHO_MENU_ID].update = NULL;
     lcdMenus[ECHO_MENU_ID].menuExit = &onExitEcho;
     lcdMenus[ECHO_MENU_ID].items = (LCD_MENU_ITEM*) malloc(sizeof(LCD_MENU_ITEM) * MAX_ITEMS_ON_MENU);
     if (lcdMenus[ECHO_MENU_ID].items == NULL)
@@ -219,6 +239,7 @@ int menu_initMenus(i2c_lcd1602_info_t *lcd_info)
     lcdMenus[RADIO_MENU_ID].xCoord = 7;
     lcdMenus[RADIO_MENU_ID].parent = MAIN_MENU_ID;
     lcdMenus[RADIO_MENU_ID].menuEnter = &onEnterRadio;
+    lcdMenus[RADIO_MENU_ID].update = NULL;
     lcdMenus[RADIO_MENU_ID].menuExit = &onExitRadio;
     lcdMenus[RADIO_MENU_ID].items = (LCD_MENU_ITEM*) malloc(sizeof(LCD_MENU_ITEM) * MAX_ITEMS_ON_MENU);
     if (lcdMenus[RADIO_MENU_ID].items == NULL)
@@ -238,6 +259,36 @@ int menu_initMenus(i2c_lcd1602_info_t *lcd_info)
     itemsRadioMenu[0].onClick = NULL;
     //Fill-up item
     itemsRadioMenu[1].id = INVALID;
+
+
+    //Klok menu
+    lcdMenus[CLOCK_MENU_ID].id = CLOCK_MENU_ID;
+    strcpy(lcdMenus[CLOCK_MENU_ID].text, "KLOK");
+    lcdMenus[CLOCK_MENU_ID].xCoord = 8;
+    lcdMenus[CLOCK_MENU_ID].parent = MAIN_MENU_ID;
+    lcdMenus[CLOCK_MENU_ID].menuEnter = &onEnterClock;
+    lcdMenus[CLOCK_MENU_ID].update = &onUpdateClock;
+    lcdMenus[CLOCK_MENU_ID].menuExit = &onExitClock;
+    lcdMenus[CLOCK_MENU_ID].items = (LCD_MENU_ITEM*) malloc(sizeof(LCD_MENU_ITEM) * MAX_ITEMS_ON_MENU);
+    if (lcdMenus[CLOCK_MENU_ID].items == NULL)
+    {
+        free(lcdMenus);
+        free(lcdMenus[MAIN_MENU_ID].items);
+        free(lcdMenus[ECHO_MENU_ID].items);
+        free(lcdMenus[RADIO_MENU_ID].items);
+        return LCD_MENU_ERROR;
+    }
+
+    LCD_MENU_ITEM *itemsClockMenu = lcdMenus[CLOCK_MENU_ID].items;
+    //Clock item
+    itemsClockMenu[0].id = 0;
+    strcpy(itemsClockMenu[0].text, "tijd");
+    itemsClockMenu[0].xCoord = 8;
+    itemsClockMenu[0].yCoord = 2;
+    itemsClockMenu[0].onClick = NULL;
+    //Fill-up item
+    itemsClockMenu[1].id = INVALID;
+
 
 
     //Display the main menu
@@ -270,6 +321,12 @@ static void onClickMainRadio(i2c_lcd1602_info_t* lcd_info)
     displayMenu(lcd_info, RADIO_MENU_ID);
 }
 
+static void onClickMainClock(i2c_lcd1602_info_t* lcd_info)
+{
+    displayMenu(lcd_info, CLOCK_MENU_ID);
+
+}
+
 
 //Echo menu
 static void onEnterEcho()
@@ -291,4 +348,20 @@ static void onEnterRadio()
 static void onExitRadio()
 {
     printf("Exited the radio menu\n");
+}
+
+//Klok menu
+static void onEnterClock()
+{
+    printf("Entered the radio menu\n");
+}
+
+static void onExitClock()
+{
+    printf("Exited the radio menu\n");
+}
+
+static void onUpdateClock(void *p)
+{
+    strcpy(lcdMenus[currentLcdMenu].items[0].text, (char*) p);
 }
