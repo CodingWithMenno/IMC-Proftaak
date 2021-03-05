@@ -4,7 +4,6 @@
 #include "smbus.h"
 #include "i2c-lcd1602.h"
 #include "lcd-menu.h"
-#include "esp_log.h"
 
 //ID's of every lcd menu (is also the number in the lcdMenus array)
 #define MAIN_MENU_ID 0
@@ -15,6 +14,7 @@
 #define INVALID 99
 
 //Static functions
+static void doFancyAnimation(i2c_lcd1602_info_t*);
 static int displayMenu(i2c_lcd1602_info_t*, unsigned int);
 static int refreshMenu(i2c_lcd1602_info_t*, unsigned int, unsigned int);
 static int displayCursorOn(i2c_lcd1602_info_t*, unsigned int);
@@ -114,6 +114,9 @@ static int displayMenu(i2c_lcd1602_info_t *lcd_info, unsigned int menuToDisplay)
     //Perform the exit function of the old menu
     if (currentLcdMenu != INVALID && lcdMenus[currentLcdMenu].menuExit != NULL)
         lcdMenus[currentLcdMenu].menuExit();
+
+    //Fancy animation
+    doFancyAnimation(lcd_info);
 
     //Perform the init function of the new menu
     if (newMenu.menuEnter != NULL)
@@ -294,6 +297,39 @@ int menu_initMenus(i2c_lcd1602_info_t *lcd_info)
     //Display the main menu
     currentLcdMenu = INVALID;
     return displayMenu(lcd_info, MAIN_MENU_ID);
+}
+
+static void doFancyAnimation(i2c_lcd1602_info_t* lcd_info)
+{
+    i2c_lcd1602_move_cursor(lcd_info, 0, 0);
+    for(int i = 0; i < 20; i++)
+    {
+        i2c_lcd1602_write_char(lcd_info, '+');
+        vTaskDelay(15 / portTICK_RATE_MS);
+    }
+    i2c_lcd1602_move_cursor(lcd_info, 19, 1);
+    i2c_lcd1602_set_right_to_left(lcd_info);
+    for(int i = 0; i < 20; i++)
+    {
+        i2c_lcd1602_write_char(lcd_info, '+');
+        vTaskDelay(15 / portTICK_RATE_MS);
+    }
+    i2c_lcd1602_move_cursor(lcd_info, 0, 2);
+    i2c_lcd1602_set_left_to_right(lcd_info);
+    for(int i = 0; i < 20; i++)
+    {
+        i2c_lcd1602_write_char(lcd_info, '+');
+        vTaskDelay(15 / portTICK_RATE_MS);
+    }
+    i2c_lcd1602_move_cursor(lcd_info, 19, 3);
+    i2c_lcd1602_set_right_to_left(lcd_info);
+    for(int i = 0; i < 20; i++)
+    {
+        i2c_lcd1602_write_char(lcd_info, '+');
+        vTaskDelay(15 / portTICK_RATE_MS);
+    }
+    i2c_lcd1602_set_left_to_right(lcd_info);
+    vTaskDelay(200 / portTICK_RATE_MS);
 }
 
 

@@ -34,20 +34,20 @@ typedef struct menu
 } LCD_MENU;
 
 /*
-Call this method to update the current lcd menu
-
--Returns:       a LCD_MENU error code
--Parameters:    a pointer to the lcd info, a generic value     
-*/
-int menu_updateMenu(i2c_lcd1602_info_t*, void*);
-
-/*
 Call this method to init all the menu's
 
 -Returns:       a LCD_MENU error code
 -Parameters:    a pointer to the lcd info
 */
 int menu_initMenus(i2c_lcd1602_info_t*);
+
+/*
+Call this method to update the current lcd menu
+
+-Returns:       a LCD_MENU error code
+-Parameters:    a pointer to the lcd info, a generic value     
+*/
+int menu_updateMenu(i2c_lcd1602_info_t*, void*);
 
 /*
 Function to go to the parent menu of the current menu
