@@ -93,16 +93,22 @@ void test(void *p)
     // i2c_lcd1602_move_cursor(lcd_info, 1, 0);
     // i2c_lcd1602_write_char(lcd_info, 'I');
     i2c_lcd1602_write_string(lcd_info, "Starting...");
-
+    
     menu_initMenus(lcd_info);
     _wait_for_user();
+    // menu_goToNextItem(lcd_info);
+    // _wait_for_user();
+    // menu_goToNextItem(lcd_info);
+    // _wait_for_user();
+    // menu_doActionCurrentItem(lcd_info);
+    // _wait_for_user();
+    // menu_goToParentMenu(lcd_info);
     menu_goToNextItem(lcd_info);
     _wait_for_user();
-    menu_goToNextItem(lcd_info);
+    menu_onClick(lcd_info);
     _wait_for_user();
-    menu_doActionCurrentItem(lcd_info);
-    _wait_for_user();
-    menu_goToParentMenu(lcd_info);
+    char* text = "demo";
+    menu_updateMenu(lcd_info, (void*) text);
 
     vTaskDelete(NULL);
 }

@@ -23,12 +23,6 @@ static void onClickMainEcho(i2c_lcd1602_info_t*);
 static void onClickMainRadio(i2c_lcd1602_info_t*);
 static void onClickMainClock(i2c_lcd1602_info_t*);
 
-static void onEnterMain();
-static void onExitMain();
-
-static void onEnterEcho();
-static void onExitEcho();
-
 static void onEnterRadio();
 static void onExitRadio();
 
@@ -115,7 +109,6 @@ static int displayMenu(i2c_lcd1602_info_t *lcd_info, unsigned int menuToDisplay)
     if (currentLcdMenu != INVALID && lcdMenus[currentLcdMenu].menuExit != NULL)
         lcdMenus[currentLcdMenu].menuExit();
 
-    //Fancy animation
     doFancyAnimation(lcd_info);
 
     //Perform the init function of the new menu
@@ -173,9 +166,9 @@ int menu_initMenus(i2c_lcd1602_info_t *lcd_info)
     strcpy(lcdMenus[MAIN_MENU_ID].text, "MENU");
     lcdMenus[MAIN_MENU_ID].xCoord = 8;
     lcdMenus[MAIN_MENU_ID].parent = INVALID;
-    lcdMenus[MAIN_MENU_ID].menuEnter = &onEnterMain;
+    lcdMenus[MAIN_MENU_ID].menuEnter = NULL;
     lcdMenus[MAIN_MENU_ID].update = NULL;
-    lcdMenus[MAIN_MENU_ID].menuExit = &onExitMain;
+    lcdMenus[MAIN_MENU_ID].menuExit = NULL;
     lcdMenus[MAIN_MENU_ID].items = (LCD_MENU_ITEM*) malloc(sizeof(LCD_MENU_ITEM) * MAX_ITEMS_ON_MENU);
     if (lcdMenus[MAIN_MENU_ID].items == NULL)
     {
@@ -211,9 +204,9 @@ int menu_initMenus(i2c_lcd1602_info_t *lcd_info)
     strcpy(lcdMenus[ECHO_MENU_ID].text, "MENU");
     lcdMenus[ECHO_MENU_ID].xCoord = 8;
     lcdMenus[ECHO_MENU_ID].parent = MAIN_MENU_ID;
-    lcdMenus[ECHO_MENU_ID].menuEnter = &onEnterEcho;
+    lcdMenus[ECHO_MENU_ID].menuEnter = NULL;
     lcdMenus[ECHO_MENU_ID].update = NULL;
-    lcdMenus[ECHO_MENU_ID].menuExit = &onExitEcho;
+    lcdMenus[ECHO_MENU_ID].menuExit = NULL;
     lcdMenus[ECHO_MENU_ID].items = (LCD_MENU_ITEM*) malloc(sizeof(LCD_MENU_ITEM) * MAX_ITEMS_ON_MENU);
     if (lcdMenus[ECHO_MENU_ID].items == NULL)
     {
@@ -296,7 +289,6 @@ int menu_initMenus(i2c_lcd1602_info_t *lcd_info)
     itemsClockMenu[1].id = INVALID;
 
 
-
     //Display the main menu
     currentLcdMenu = INVALID;
     return displayMenu(lcd_info, MAIN_MENU_ID);
@@ -332,24 +324,12 @@ static void doFancyAnimation(i2c_lcd1602_info_t* lcd_info)
         vTaskDelay(15 / portTICK_RATE_MS);
     }
     i2c_lcd1602_set_left_to_right(lcd_info);
-    vTaskDelay(200 / portTICK_RATE_MS);
 }
-
 
 
 //From here onClick, init and exit functions
 
 //Main menu
-static void onEnterMain()
-{
-    printf("Entered the main menu\n");
-}
-
-static void onExitMain()
-{
-    printf("Exited the main menu\n");
-}
-
 static void onClickMainEcho(i2c_lcd1602_info_t* lcd_info)
 {
     displayMenu(lcd_info, ECHO_MENU_ID);
@@ -366,17 +346,8 @@ static void onClickMainClock(i2c_lcd1602_info_t* lcd_info)
 
 }
 
-
 //Echo menu
-static void onEnterEcho()
-{
-    printf("Entered the echo menu\n");
-}
 
-static void onExitEcho()
-{
-    printf("Exited the echo menu\n");
-}
 
 //Radio menu
 static void onEnterRadio()
