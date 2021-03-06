@@ -324,6 +324,7 @@ static void doFancyAnimation(i2c_lcd1602_info_t* lcd_info)
         vTaskDelay(15 / portTICK_RATE_MS);
     }
     i2c_lcd1602_set_left_to_right(lcd_info);
+    vTaskDelay(100 / portTICK_RATE_MS);
 }
 
 
