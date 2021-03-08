@@ -75,7 +75,7 @@ void test(void *p)
     // Set up I2C
     i2c_master_init();
     i2c_port_t i2c_num = I2C_MASTER_NUM;
-    //uint8_t address = CONFIG_LCD1602_I2C_ADDRESS;
+    uint8_t address = CONFIG_LCD1602_I2C_ADDRESS;
     
 
     // Set up the SMBus
@@ -86,30 +86,12 @@ void test(void *p)
     // Set up the LCD1602 device with backlight off
     i2c_lcd1602_info_t *lcd_info = i2c_lcd1602_malloc();
     i2c_lcd1602_init(lcd_info, smbus_info, true, LCD_NUM_ROWS, LCD_NUM_COLUMNS, LCD_NUM_VIS_COLUMNS);
-
-    ESP_LOGI(TAG, "cursor on");
-    //_wait_for_user();
     i2c_lcd1602_set_cursor(lcd_info, true);
-
-    ESP_LOGI(TAG, "write text at 0,0");
-    //_wait_for_user();
     i2c_lcd1602_move_cursor(lcd_info, 4, 1);
-    // i2c_lcd1602_write_char(lcd_info, 'H');
-    // i2c_lcd1602_move_cursor(lcd_info, 1, 0);
-    // i2c_lcd1602_write_char(lcd_info, 'O');
-    // i2c_lcd1602_move_cursor(lcd_info, 1, 0);
-    // i2c_lcd1602_write_char(lcd_info, 'I');
     i2c_lcd1602_write_string(lcd_info, "Starting...");
     
     menu_initMenus(lcd_info);
     _wait_for_user();
-    // menu_goToNextItem(lcd_info);
-    // _wait_for_user();
-    // menu_goToNextItem(lcd_info);
-    // _wait_for_user();
-    // menu_doActionCurrentItem(lcd_info);
-    // _wait_for_user();
-    // menu_goToParentMenu(lcd_info);
     menu_goToNextItem(lcd_info);
     _wait_for_user();
     menu_onClick(lcd_info);
