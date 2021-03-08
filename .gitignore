@@ -50,3 +50,7 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+code/components/esp32-smbus/
+
+code/components/esp32-i2c-lcd1602/

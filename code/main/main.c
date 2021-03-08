@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "esp_system.h"
@@ -11,6 +12,7 @@
 #include "smbus.h"
 #include "i2c-lcd1602.h"
 #include "lcd-menu.h"
+#include "qwiic_twist.h"
 
 
 #define TAG "app"
@@ -28,6 +30,10 @@
 #define LCD_NUM_ROWS			 4
 #define LCD_NUM_COLUMNS			 40
 #define LCD_NUM_VIS_COLUMNS		 20
+
+void onEncoderPressed();
+void onEncoderClicked();
+void onEncoderMoved(int16_t);
 
 static void i2c_master_init(void)
 {
@@ -69,7 +75,8 @@ void test(void *p)
     // Set up I2C
     i2c_master_init();
     i2c_port_t i2c_num = I2C_MASTER_NUM;
-    uint8_t address = CONFIG_LCD1602_I2C_ADDRESS;
+    //uint8_t address = CONFIG_LCD1602_I2C_ADDRESS;
+    
 
     // Set up the SMBus
     smbus_info_t *smbus_info = smbus_malloc();
@@ -110,11 +117,64 @@ void test(void *p)
     char* text = "demo";
     menu_updateMenu(lcd_info, (void*) text);
 
-    vTaskDelete(NULL);
+
+    //Rotary testing
+    qwiic_twist_t *qwiic_info = (qwiic_twist_t*)malloc(sizeof(qwiic_twist_t));
+
+    qwiic_info->smbus_info = smbus_info;
+    qwiic_info->i2c_addr = QWIIC_TWIST_ADDRESS;
+    qwiic_info->port = i2c_num;
+    qwiic_info->xMutex = xSemaphoreCreateMutex();
+    qwiic_info->task_enabled = true;
+    qwiic_info->task_time = 0;
+    qwiic_info->onButtonPressed = &onEncoderPressed;
+    qwiic_info->onButtonClicked = &onEncoderClicked;
+    qwiic_info->onMoved = &onEncoderMoved;
+    
+    qwiic_twist_init(qwiic_info);
+    qwiic_twist_start_task(qwiic_info);
+
+    //RotaryEncoder_init();
+
+    while (1)
+    {
+        
+        /* code */
+        // uint16_t data = 1;
+        // RotaryEncoder_getDiff(&data);
+        // printf("%d", data);
+
+        _wait_for_user();
+    }
 }
+
+void onEncoderPressed()
+{
+    printf("Encoder Pressed\n");
+}
+
+void onEncoderClicked()
+{
+    printf("Encoder clicked\n");
+}
+
+void onEncoderMoved(int16_t diff)
+{
+    if(diff>0)
+    {
+            printf("Encoder Moved: right\n");
+    } else 
+    {
+            printf("Encoder Moved: left\n");
+    }
+}
+
+
 
 void app_main()
 {
     xTaskCreate(&test, "lcd1602_task", 4096, NULL, 5, NULL);
+    
 }
+
 
