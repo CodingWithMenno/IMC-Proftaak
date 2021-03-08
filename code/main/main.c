@@ -31,9 +31,17 @@
 #define LCD_NUM_COLUMNS			 40
 #define LCD_NUM_VIS_COLUMNS		 20
 
-void onEncoderPressed();
-void onEncoderClicked();
-void onEncoderMoved(int16_t);
+//lcd general settings
+static i2c_lcd1602_info_t *lcd_info;
+
+//rotary encoder functions
+static void onEncoderClicked();
+static void onEncoderPressed();
+static void onEncoderMoved(int16_t);
+
+//boolean to check if you went back a menu
+static bool wentBack = false;
+
 
 static void i2c_master_init(void)
 {
@@ -53,24 +61,12 @@ static void i2c_master_init(void)
 
 // WARNING: ESP32 does not support blocking input from stdin yet, so this polls
 // the UART and effectively hangs up the SDK.
-static uint8_t _wait_for_user(void)
+static void wait_for_user(void)
 {
-    uint8_t c = 0;
-#ifdef USE_STDIN
-    while (!c)
-    {
-       STATUS s = uart_rx_one_char(&c);
-       if (s == OK) {
-          printf("%c", c);
-       }
-    }
-#else
     vTaskDelay(1000 / portTICK_RATE_MS);
-#endif
-    return c;
 }
 
-void test(void *p) 
+void i2c_init() 
 {
     // Set up I2C
     i2c_master_init();
@@ -83,24 +79,14 @@ void test(void *p)
     smbus_init(smbus_info, i2c_num, address);
     smbus_set_timeout(smbus_info, 1000 / portTICK_RATE_MS);
 
-    // Set up the LCD1602 device with backlight off
-    i2c_lcd1602_info_t *lcd_info = i2c_lcd1602_malloc();
+    // Lcd and menu init
+    lcd_info = i2c_lcd1602_malloc();
     i2c_lcd1602_init(lcd_info, smbus_info, true, LCD_NUM_ROWS, LCD_NUM_COLUMNS, LCD_NUM_VIS_COLUMNS);
     i2c_lcd1602_set_cursor(lcd_info, true);
     i2c_lcd1602_move_cursor(lcd_info, 4, 1);
     i2c_lcd1602_write_string(lcd_info, "Starting...");
-    
-    menu_initMenus(lcd_info);
-    _wait_for_user();
-    menu_goToNextItem(lcd_info);
-    _wait_for_user();
-    menu_onClick(lcd_info);
-    _wait_for_user();
-    char* text = "demo";
-    menu_updateMenu(lcd_info, (void*) text);
 
-
-    //Rotary testing
+    //Rotary init
     qwiic_twist_t *qwiic_info = (qwiic_twist_t*)malloc(sizeof(qwiic_twist_t));
 
     qwiic_info->smbus_info = smbus_info;
@@ -114,49 +100,59 @@ void test(void *p)
     qwiic_info->onMoved = &onEncoderMoved;
     
     qwiic_twist_init(qwiic_info);
+    menu_initMenus(lcd_info);
     qwiic_twist_start_task(qwiic_info);
 
-    //RotaryEncoder_init();
 
-    while (1)
+}
+
+static void onEncoderPressed()
+{
+    //printf("Encoder Pressed\n");
+    static int counter = 0;
+    counter++;
+    if(counter == 5)
     {
-        
-        /* code */
-        // uint16_t data = 1;
-        // RotaryEncoder_getDiff(&data);
-        // printf("%d", data);
-
-        _wait_for_user();
+        menu_goToParentMenu(lcd_info);
+        counter = 0;
+        wentBack = true;
     }
 }
 
-void onEncoderPressed()
+static void onEncoderClicked()
 {
-    printf("Encoder Pressed\n");
+    //printf("Encoder clicked\n");
+    if (!wentBack)
+    {
+        menu_onClick(lcd_info);
+    }
+    wentBack = false; 
+    
+       
 }
 
-void onEncoderClicked()
-{
-    printf("Encoder clicked\n");
-}
-
-void onEncoderMoved(int16_t diff)
+static void onEncoderMoved(int16_t diff)
 {
     if(diff>0)
     {
-            printf("Encoder Moved: right\n");
+        //printf("Encoder Moved: right\n");
+        menu_goToNextItem(lcd_info); 
     } else 
     {
-            printf("Encoder Moved: left\n");
+        //printf("Encoder Moved: left\n");
+        menu_goToPreviousitem(lcd_info);
     }
 }
 
-
-
 void app_main()
 {
-    xTaskCreate(&test, "lcd1602_task", 4096, NULL, 5, NULL);
-    
+    //xTaskCreate(&i2c_init, "lcd1602_task", 4096, NULL, 5, NULL);
+    i2c_init();
+
+    while(1)
+    {
+        wait_for_user();
+    }
 }
 
 

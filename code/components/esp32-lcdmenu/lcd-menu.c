@@ -83,7 +83,7 @@ static int displayCursorOn(i2c_lcd1602_info_t *lcd_info, unsigned int itemToSele
     LCD_MENU_ITEM newItem = displayedMenu.items[itemToSelect];
 
     //Check if itemToSelect is valid
-    if (itemToSelect > MAX_ITEMS_ON_MENU - 1 || newItem.id == INVALID)
+    if (itemToSelect > MAX_ITEMS_ON_MENU - 1 || itemToSelect < 0 || newItem.id == INVALID)
         return LCD_MENU_ERROR;
     
     //Remove the old cursor
@@ -364,12 +364,12 @@ static void onExitRadio()
 //Klok menu
 static void onEnterClock()
 {
-    printf("Entered the radio menu\n");
+    printf("Entered the clock menu\n");
 }
 
 static void onExitClock()
 {
-    printf("Exited the radio menu\n");
+    printf("Exited the clock menu\n");
 }
 
 static void onUpdateClock(void *p)
