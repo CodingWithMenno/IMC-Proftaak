@@ -1,3 +1,7 @@
+//Header include guard for the extension file (lcd-menu-elaboration.c)
+#ifndef LCD_MENU_C
+#define LCD_MENU_C
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -315,3 +319,5 @@ static void doFancyAnimation(i2c_lcd1602_info_t* lcd_info)
     i2c_lcd1602_set_left_to_right(lcd_info);
     vTaskDelay(100 / portTICK_RATE_MS);
 }
+
+#endif

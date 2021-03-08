@@ -4,7 +4,7 @@
 /*
 This file is to work out the onClicks, onExit, onEnter and update functions of the lcd-menu's. 
 
-(This file is an extension of the lcd-menu.c file, so thats why we include a ".c" file, sorry)
+(This file is an extension of the lcd-menu.c file, so that is why there is a ".c" file included)
 */
 
 //Main menu
