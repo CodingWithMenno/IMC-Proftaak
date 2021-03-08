@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+
 #include "esp_system.h"
 #include "driver/gpio.h"
 #include "driver/i2c.h"
@@ -13,6 +14,8 @@
 #include "i2c-lcd1602.h"
 #include "lcd-menu.h"
 #include "qwiic_twist.h"
+
+#include "sdcard-mp3.h"
 
 
 #define TAG "app"
@@ -106,6 +109,7 @@ void i2c_init()
 
 }
 
+//TODO fix if clicked 5 times without going back
 static void onEncoderPressed()
 {
     //printf("Encoder Pressed\n");
@@ -148,9 +152,13 @@ void app_main()
 {
     //xTaskCreate(&i2c_init, "lcd1602_task", 4096, NULL, 5, NULL);
     i2c_init();
+    
+    mp3_init();
+    mp3_start();
 
     while(1)
     {
+        mp3_update();
         wait_for_user();
     }
 }
