@@ -4,7 +4,7 @@
 #include "smbus.h"
 #include "i2c-lcd1602.h"
 #include "lcd-menu.h"
-#include "radioController.h"
+#include "lcd-menu-elaboration.h"
 
 //ID's of every lcd menu (is also the number in the lcdMenus array)
 #define MAIN_MENU_ID 0
@@ -20,19 +20,7 @@ static int displayMenu(i2c_lcd1602_info_t*, unsigned int);
 static int refreshMenu(i2c_lcd1602_info_t*, unsigned int, unsigned int);
 static int displayCursorOn(i2c_lcd1602_info_t*, unsigned int);
 
-static void onClickMainEcho(i2c_lcd1602_info_t*);
-static void onClickMainRadio(i2c_lcd1602_info_t*);
-static void onClickMainClock(i2c_lcd1602_info_t*);
-
-static void onEnterRadio();
-static void onExitRadio();
-
-static void onEnterClock();
-static void onUpdateClock(void*);
-static void onExitClock();
-
-
-//Variable to all the menu's in the application
+//Variable to all the lcd menu's
 static LCD_MENU *lcdMenus;
 //Variable to the current lcd menu
 static unsigned int currentLcdMenu;
@@ -326,55 +314,4 @@ static void doFancyAnimation(i2c_lcd1602_info_t* lcd_info)
     }
     i2c_lcd1602_set_left_to_right(lcd_info);
     vTaskDelay(100 / portTICK_RATE_MS);
-}
-
-
-//From here onClick, init and exit functions
-
-//Main menu
-static void onClickMainEcho(i2c_lcd1602_info_t* lcd_info)
-{
-    displayMenu(lcd_info, ECHO_MENU_ID);
-}
-
-static void onClickMainRadio(i2c_lcd1602_info_t* lcd_info)
-{
-    displayMenu(lcd_info, RADIO_MENU_ID);
-    radioSwitch(lcdMenus[currentLcdMenu].items[currentMenuItem].text);
-}
-
-static void onClickMainClock(i2c_lcd1602_info_t* lcd_info)
-{
-    displayMenu(lcd_info, CLOCK_MENU_ID);
-
-}
-
-//Echo menu
-
-
-//Radio menu
-static void onEnterRadio()
-{
-    printf("Entered the radio menu\n");
-}
-
-static void onExitRadio()
-{
-    printf("Exited the radio menu\n");
-}
-
-//Klok menu
-static void onEnterClock()
-{
-    printf("Entered the radio menu\n");
-}
-
-static void onExitClock()
-{
-    printf("Exited the radio menu\n");
-}
-
-static void onUpdateClock(void *p)
-{
-    strcpy(lcdMenus[currentLcdMenu].items[0].text, (char*) p);
 }
