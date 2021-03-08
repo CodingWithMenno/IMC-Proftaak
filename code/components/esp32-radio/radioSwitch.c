@@ -1,5 +1,6 @@
 #include "stdio.h"
 #include "startRadio.h"
+#include "radioSwitch.h"
 
 void radioSwitch(char channel)
 {    

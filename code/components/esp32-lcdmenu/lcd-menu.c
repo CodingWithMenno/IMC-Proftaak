@@ -4,6 +4,7 @@
 #include "smbus.h"
 #include "i2c-lcd1602.h"
 #include "lcd-menu.h"
+#include "radioSwitch.h"
 
 //ID's of every lcd menu (is also the number in the lcdMenus array)
 #define MAIN_MENU_ID 0
@@ -252,7 +253,7 @@ int menu_initMenus(i2c_lcd1602_info_t *lcd_info)
     LCD_MENU_ITEM *itemsRadioMenu = lcdMenus[RADIO_MENU_ID].items;
     //Radio item
     itemsRadioMenu[0].id = 0;
-    strcpy(itemsRadioMenu[0].text, "kanaal");
+    strcpy(itemsRadioMenu[0].text, "538");
     itemsRadioMenu[0].xCoord = 7;
     itemsRadioMenu[0].yCoord = 2;
     itemsRadioMenu[0].onClick = NULL;
@@ -339,6 +340,7 @@ static void onClickMainEcho(i2c_lcd1602_info_t* lcd_info)
 static void onClickMainRadio(i2c_lcd1602_info_t* lcd_info)
 {
     displayMenu(lcd_info, RADIO_MENU_ID);
+    radioSwitch("538");
 }
 
 static void onClickMainClock(i2c_lcd1602_info_t* lcd_info)

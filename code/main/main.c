@@ -103,12 +103,14 @@ void test(void *p)
     // menu_doActionCurrentItem(lcd_info);
     // _wait_for_user();
     // menu_goToParentMenu(lcd_info);
-    menu_goToNextItem(lcd_info);
+    // menu_goToNextItem(lcd_info);
+    // _wait_for_user();
+    menu_onClick(lcd_info);
     _wait_for_user();
     menu_onClick(lcd_info);
     _wait_for_user();
-    char* text = "demo";
-    menu_updateMenu(lcd_info, (void*) text);
+    // char* text = "demo";
+    // menu_updateMenu(lcd_info, (void*) text);
 
     vTaskDelete(NULL);
 }
