@@ -1,21 +1,25 @@
 #include "stdio.h"
+#include "string.h"
 #include "startRadio.h"
 #include "radioSwitch.h"
 
-void radioSwitch(char channel)
+void radioSwitch(char channel[])
 {    
-    switch (channel)
+    char* Ip;
+    char Ipa;
+
+    if (strcmp(channel, "538") == 0)
     {
-        case '538':
-            startRadio("https://20103.live.streamtheworld.com/TLPSTR09.mp3");
-            break;
-
-        case 'Q':
-            startRadio("https://icecast-qmusicnl-cdp.triple-it.nl/Qmusic_nl_live_96.mp3");
-            break;
-
-        case 'SKY':
-            startRadio("https://19993.live.streamtheworld.com/SKYRADIO.mp3");
-            break;
-    }
+        Ip = "https://20103.live.streamtheworld.com/TLPSTR09.mp3";
+        Ipa = *Ip;
+        startRadio(Ipa);
+    }else if(strcmp(channel, "Q") == 0){
+        Ip = "https://icecast-qmusicnl-cdp.triple-it.nl/Qmusic_nl_live_96.mp3";
+        Ipa = *Ip;
+        startRadio(Ipa);
+    }else if (strcmp(channel, "SKY") == 0){
+        Ip = "https://19993.live.streamtheworld.com/SKYRADIO.mp3";
+        Ipa = *Ip;
+        startRadio(Ipa);
+    } 
 }

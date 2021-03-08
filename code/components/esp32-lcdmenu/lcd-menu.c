@@ -340,7 +340,7 @@ static void onClickMainEcho(i2c_lcd1602_info_t* lcd_info)
 static void onClickMainRadio(i2c_lcd1602_info_t* lcd_info)
 {
     displayMenu(lcd_info, RADIO_MENU_ID);
-    radioSwitch("538");
+    radioSwitch(lcdMenus[currentLcdMenu].items[currentMenuItem].text);
 }
 
 static void onClickMainClock(i2c_lcd1602_info_t* lcd_info)

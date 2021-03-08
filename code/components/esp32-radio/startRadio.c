@@ -40,6 +40,7 @@
 #endif
 
 #include "startRadio.h"
+#include "radioSwitch.h"
 
 static const char *TAG = "HTTP_MP3_EXAMPLE";
 
