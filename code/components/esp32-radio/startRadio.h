@@ -1,6 +1,6 @@
 #ifndef STARTRADIO_H
 #define STARTRADIO_H
 
-void startRadio(void);
+void startRadio(char Ip);
 
 #endif
