@@ -39,12 +39,11 @@
 #include "tcpip_adapter.h"
 #endif
 
-#include "ipChange.h"
 #include "startRadio.h"
 
 static const char *TAG = "HTTP_MP3_EXAMPLE";
 
-void startRadio(void)
+void startRadio(char Ip)
 {
     esp_err_t err = nvs_flash_init();
     if (err == ESP_ERR_NVS_NO_FREE_PAGES) {
@@ -98,7 +97,7 @@ void startRadio(void)
     audio_pipeline_link(pipeline, &link_tag[0], 3);
 
     ESP_LOGI(TAG, "[2.6] Set up  uri (http as http_stream, mp3 as mp3 decoder, and default output is i2s)");
-    audio_element_set_uri(http_stream_reader, getIp());
+    audio_element_set_uri(http_stream_reader, Ip);
 
     ESP_LOGI(TAG, "[ 3 ] Start and wait for Wi-Fi network");
     esp_periph_config_t periph_cfg = DEFAULT_ESP_PERIPH_SET_CONFIG();
