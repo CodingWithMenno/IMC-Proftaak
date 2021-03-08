@@ -8,80 +8,78 @@
 //Some constants for the lcd menu's
 #define TOTAL_MENUS 6
 #define MAX_ITEMS_ON_MENU 4
-#define MAX_LINES_ON_MENU 20
-#define MAX_BUTTON_LENGTH 8
-
-//The current menu
-extern LCD_MENU *currentLcdMenu;
+#define MAX_TEXT_LENGTH 8
 
 //A struct for a menu item
 typedef struct
 {
     unsigned int id;
-    char text[MAX_BUTTON_LENGTH];
-    void (*onClick)(void);
-    int xCoord;
-    int yCoord;
+    char text[MAX_TEXT_LENGTH];
+    void (*onClick)(i2c_lcd1602_info_t*);
+    unsigned int xCoord;  //Where to start to write the text
+    unsigned int yCoord;  //Where to start to write the text
 } LCD_MENU_ITEM;
 
 //A struct for a menu
 typedef struct menu
 {
     unsigned int id;
-    char text[MAX_LINES_ON_MENU];
-    void (*menuInit)(void);
+    unsigned int xCoord; //Where to start to write the text
+    char text[MAX_TEXT_LENGTH];
+    void (*menuEnter)(void);
+    void (*update)(void*); 
     void (*menuExit)(void);
-    unsigned int menuPointers[MAX_ITEMS_ON_MENU]; //Points to the id of the next possible menu's
-    LCD_MENU_ITEM *menuItems[MAX_ITEMS_ON_MENU]; //Points to all the menu items in this menu
+    LCD_MENU_ITEM *items; //Pointer to the menu items
+    unsigned int parent; //ID to the parent LCD_MENU
 } LCD_MENU;
-
 
 /*
 Call this method to init all the menu's
 
 -Returns:       a LCD_MENU error code
+-Parameters:    a pointer to the lcd info
 */
-int menu_initMenus();
+int menu_initMenus(i2c_lcd1602_info_t*);
 
 /*
-Function to go back to the previous menu
+Call this method to update the current lcd menu
 
 -Returns:       a LCD_MENU error code
+-Parameters:    a pointer to the lcd info, a generic value     
 */
-int menu_goBackAMenu();
+int menu_updateMenu(i2c_lcd1602_info_t*, void*);
+
+/*
+Function to go to the parent menu of the current menu
+
+-Returns:       a LCD_MENU error code
+-Parameters:    a pointer to the lcd info
+*/
+int menu_goToParentMenu(i2c_lcd1602_info_t*);
 
 /*
 Function to start the action (the onClick() function) of
 the current selected item on the current menu
 
 -Returns:       A LCD_MENU error code
+-Parameters:    a pointer to the lcd info
 */
-int menu_doActionCurrentItem();
+int menu_onClick(i2c_lcd1602_info_t*);
 
 /*
 Function to set the cursor to the next item in the menu
 
 -Returns:       a LCD_MENU error code
+-Parameters:    a pointer to the lcd info
 */
-int menu_goToNextItem();
+int menu_goToNextItem(i2c_lcd1602_info_t*);
 
 /*
 Function to set the cursor to the previous item in the menu
 
 -Returns:       a LCD_MENU error code
+-Parameters:    a pointer to the lcd info
 */
-int menu_goToPreviousitem();
-
-
-
-//OPTIONAL FUNCTIONS
-
-/*
-Function to switch between menu's
-
--Returns:       a LCD_MENU error code
--Parameters:    ID of next menu
-*/
-int menu_switchMenu(unsigned int);
+int menu_goToPreviousitem(i2c_lcd1602_info_t*);
 
 #endif
