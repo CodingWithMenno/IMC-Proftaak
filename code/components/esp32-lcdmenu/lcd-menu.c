@@ -4,7 +4,7 @@
 #include "smbus.h"
 #include "i2c-lcd1602.h"
 #include "lcd-menu.h"
-#include "radioSwitch.h"
+#include "radioController.h"
 
 //ID's of every lcd menu (is also the number in the lcdMenus array)
 #define MAIN_MENU_ID 0
