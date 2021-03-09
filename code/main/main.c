@@ -43,6 +43,7 @@ static void onEncoderMoved(int16_t);
 
 //boolean to check if you went back a menu
 static bool wentBack = false;
+static int clickCounter = 0;
 
 
 static void i2c_master_init(void)
@@ -112,12 +113,12 @@ void i2c_init()
 static void onEncoderPressed()
 {
     //printf("Encoder Pressed\n");
-    static int counter = 0;
-    counter++;
-    if(counter == 5)
+    
+    clickCounter++;
+    if(clickCounter == 5)
     {
         menu_goToParentMenu(lcd_info);
-        counter = 0;
+        clickCounter = 0;
         wentBack = true;
     }
 }
@@ -129,6 +130,7 @@ static void onEncoderClicked()
     {
         menu_onClick(lcd_info);
     }
+    clickCounter = 0;
     wentBack = false; 
     
        
