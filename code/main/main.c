@@ -38,6 +38,7 @@ static i2c_lcd1602_info_t *lcd_info;
 static void onEncoderClicked();
 static void onEncoderPressed();
 static void onEncoderMoved(int16_t);
+void stmp_timesync_event(struct timeval *tv);
 
 //boolean to check if you went back a menu
 static bool wentBack = false;
@@ -147,12 +148,29 @@ static void onEncoderMoved(int16_t diff)
 void app_main()
 {
     //xTaskCreate(&i2c_init, "lcd1602_task", 4096, NULL, 5, NULL);
+    sntp_sync(stmp_timesync_event);
     i2c_init();
 
     while(1)
     {
         wait_for_user();
     }
+}
+
+void stmp_timesync_event(struct timeval *tv)
+{
+    ESP_LOGI(TAG, "Notification of a time synchronization event");
+
+    time_t now;
+    struct tm timeinfo;
+    time(&now);
+
+    char strftime_buf[64];
+    localtime_r(&now, &timeinfo);
+    strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
+    ESP_LOGI(TAG, "The current date/time in Amsterdam is: %s", strftime_buf);
+
+    // talking_clock_fill_queue();
 }
 
 
