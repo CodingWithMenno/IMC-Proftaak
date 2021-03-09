@@ -78,7 +78,7 @@ void startRadio(char Ip)
         err = nvs_flash_init();
     }
 #if (ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(4, 1, 0))
-    //ESP_ERROR_CHECK(esp_netif_init());
+    ESP_ERROR_CHECK(esp_netif_init());
 	tcpip_adapter_init();
 #else
     tcpip_adapter_init();
@@ -121,8 +121,10 @@ void startRadio(char Ip)
     const char *link_tag[3] = {"http", "mp3", "i2s"};
     audio_pipeline_link(pipeline, &link_tag[0], 3);
 
+    const char* Ips = &Ip;
+
     ESP_LOGI(TAG, "[2.6] Set up  uri (http as http_stream, mp3 as mp3 decoder, and default output is i2s)");
-    audio_element_set_uri(http_stream_reader, Ip);
+    audio_element_set_uri(http_stream_reader, Ips);
 
     ESP_LOGI(TAG, "[ 3 ] Start and wait for Wi-Fi network");
     esp_periph_config_t periph_cfg = DEFAULT_ESP_PERIPH_SET_CONFIG();
