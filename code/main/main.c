@@ -14,7 +14,6 @@
 #include "i2c-lcd1602.h"
 #include "lcd-menu.h"
 #include "qwiic_twist.h"
-
 #include "sdcard-mp3.h"
 
 
@@ -151,14 +150,13 @@ static void onEncoderMoved(int16_t diff)
 void app_main()
 {
     //xTaskCreate(&i2c_init, "lcd1602_task", 4096, NULL, 5, NULL);
-    i2c_init();
     
-    sdcard_mp3_init();
-    //mp3_start();
+    mp3_play();
+
+    i2c_init();
 
     while(1)
     {
-        sdcard_mp3_update();
         wait_for_user();
     }
 }
