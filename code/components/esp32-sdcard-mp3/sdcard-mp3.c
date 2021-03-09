@@ -29,7 +29,11 @@ esp_periph_set_handle_t set;
 
 void mp3_load(char* fileName)
 {
-    isPlaying = 1;
+    if (isPlaying)
+    {
+        cleanUp();
+    }
+    
 
     esp_log_level_set("*", ESP_LOG_WARN);
     esp_log_level_set(TAG, ESP_LOG_INFO);
@@ -41,10 +45,6 @@ void mp3_load(char* fileName)
 
     // Initialize SD Card peripheral
     audio_board_sdcard_init(set, SD_MODE_1_LINE);
-
-    ESP_LOGI(TAG, "[ 2 ] Start codec chip");
-    audio_board_handle_t board_handle = audio_board_init();
-    audio_hal_ctrl_codec(board_handle->audio_hal, AUDIO_HAL_CODEC_MODE_DECODE, AUDIO_HAL_CTRL_START);
 
     ESP_LOGI(TAG, "[3.0] Create audio pipeline for playback");
     audio_pipeline_cfg_t pipeline_cfg = DEFAULT_AUDIO_PIPELINE_CONFIG();
@@ -89,36 +89,7 @@ void mp3_load(char* fileName)
     ESP_LOGI(TAG, "[ 5 ] Start audio_pipeline");
     audio_pipeline_run(pipeline);
 
-    // ESP_LOGI(TAG, "[ 6 ] Listen for all pipeline events");
-    // while (1) {
-    //     audio_event_iface_msg_t msg;
-    //     esp_err_t ret = audio_event_iface_listen(evt, &msg, portMAX_DELAY);
-    //     if (ret != ESP_OK) {
-    //         ESP_LOGE(TAG, "[ * ] Event interface error : %d", ret);
-    //         continue;
-    //     }
-
-    //     if (msg.source_type == AUDIO_ELEMENT_TYPE_ELEMENT && msg.source == (void *) mp3_decoder
-    //         && msg.cmd == AEL_MSG_CMD_REPORT_MUSIC_INFO) {
-    //         audio_element_info_t music_info = {0};
-    //         audio_element_getinfo(mp3_decoder, &music_info);
-
-    //         ESP_LOGI(TAG, "[ * ] Receive music info from mp3 decoder, sample_rates=%d, bits=%d, ch=%d",
-    //                  music_info.sample_rates, music_info.bits, music_info.channels);
-
-    //         audio_element_setinfo(i2s_stream_writer, &music_info);
-    //         i2s_stream_set_clk(i2s_stream_writer, music_info.sample_rates, music_info.bits, music_info.channels);
-    //         continue;
-    //     }
-
-    //     /* Stop when the last pipeline element (i2s_stream_writer in this case) receives stop event */
-    //     if (msg.source_type == AUDIO_ELEMENT_TYPE_ELEMENT && msg.source == (void *) i2s_stream_writer
-    //         && msg.cmd == AEL_MSG_CMD_REPORT_STATUS
-    //         && (((int)msg.data == AEL_STATUS_STATE_STOPPED) || ((int)msg.data == AEL_STATUS_STATE_FINISHED))) {
-    //         ESP_LOGW(TAG, "[ * ] Stop event received");
-    //         break;
-    //     }
-    // }
+    isPlaying = 1;
 }
 
 void mp3_update()

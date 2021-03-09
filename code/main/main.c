@@ -154,10 +154,14 @@ void app_main()
     i2c_init();
 
     mp3_load("/sdcard/test.mp3");
+    wait_for_user();
+    wait_for_user();
+    wait_for_user();
+    mp3_load("/sdcard/test.mp3");
 
     while(1)
     {
-        mp3_update();
+        //mp3_update();
         wait_for_user();
     }
 }
