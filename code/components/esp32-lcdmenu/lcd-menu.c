@@ -1,9 +1,14 @@
+//Header include guard for the extension file (lcd-menu-elaboration.c)
+#ifndef LCD_MENU_C
+#define LCD_MENU_C
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include "smbus.h"
 #include "i2c-lcd1602.h"
 #include "lcd-menu.h"
+#include "lcd-menu-elaboration.h"
 
 //ID's of every lcd menu (is also the number in the lcdMenus array)
 #define MAIN_MENU_ID 0
@@ -19,19 +24,7 @@ static int displayMenu(i2c_lcd1602_info_t*, unsigned int);
 static int refreshMenu(i2c_lcd1602_info_t*, unsigned int, unsigned int);
 static int displayCursorOn(i2c_lcd1602_info_t*, unsigned int);
 
-static void onClickMainEcho(i2c_lcd1602_info_t*);
-static void onClickMainRadio(i2c_lcd1602_info_t*);
-static void onClickMainClock(i2c_lcd1602_info_t*);
-
-static void onEnterRadio();
-static void onExitRadio();
-
-static void onEnterClock();
-static void onUpdateClock(void*);
-static void onExitClock();
-
-
-//Variable to all the menu's in the application
+//Variable to all the lcd menu's
 static LCD_MENU *lcdMenus;
 //Variable to the current lcd menu
 static unsigned int currentLcdMenu;
@@ -252,7 +245,7 @@ int menu_initMenus(i2c_lcd1602_info_t *lcd_info)
     LCD_MENU_ITEM *itemsRadioMenu = lcdMenus[RADIO_MENU_ID].items;
     //Radio item
     itemsRadioMenu[0].id = 0;
-    strcpy(itemsRadioMenu[0].text, "kanaal");
+    strcpy(itemsRadioMenu[0].text, "538");
     itemsRadioMenu[0].xCoord = 7;
     itemsRadioMenu[0].yCoord = 2;
     itemsRadioMenu[0].onClick = NULL;
@@ -327,52 +320,4 @@ static void doFancyAnimation(i2c_lcd1602_info_t* lcd_info)
     vTaskDelay(100 / portTICK_RATE_MS);
 }
 
-
-//From here onClick, init and exit functions
-
-//Main menu
-static void onClickMainEcho(i2c_lcd1602_info_t* lcd_info)
-{
-    displayMenu(lcd_info, ECHO_MENU_ID);
-}
-
-static void onClickMainRadio(i2c_lcd1602_info_t* lcd_info)
-{
-    displayMenu(lcd_info, RADIO_MENU_ID);
-}
-
-static void onClickMainClock(i2c_lcd1602_info_t* lcd_info)
-{
-    displayMenu(lcd_info, CLOCK_MENU_ID);
-
-}
-
-//Echo menu
-
-
-//Radio menu
-static void onEnterRadio()
-{
-    printf("Entered the radio menu\n");
-}
-
-static void onExitRadio()
-{
-    printf("Exited the radio menu\n");
-}
-
-//Klok menu
-static void onEnterClock()
-{
-    printf("Entered the clock menu\n");
-}
-
-static void onExitClock()
-{
-    printf("Exited the clock menu\n");
-}
-
-static void onUpdateClock(void *p)
-{
-    strcpy(lcdMenus[currentLcdMenu].items[0].text, (char*) p);
-}
+#endif
