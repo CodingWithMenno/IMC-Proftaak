@@ -2,6 +2,6 @@
 #define RADIOCONTROLLER_H
 
 void radioSwitch(char[]);
-void startRadio(char Ip);
+void startRadio(char *Ip);
 
 #endif
