@@ -63,9 +63,9 @@ static void i2c_master_init(void)
 
 // WARNING: ESP32 does not support blocking input from stdin yet, so this polls
 // the UART and effectively hangs up the SDK.
-static void wait_for_user(void)
+static void wait(unsigned int time)
 {
-    vTaskDelay(1000 / portTICK_RATE_MS);
+    vTaskDelay(time / portTICK_RATE_MS);
 }
 
 void i2c_init() 
@@ -154,16 +154,16 @@ void app_main()
     i2c_init();
 
     mp3_load("/sdcard/test.mp3");
-    wait_for_user();
-    wait_for_user();
-    wait_for_user();
+    wait(1000);
+    wait(1000);
+    wait(1000);
     mp3_load("/sdcard/test.mp3");
 
     while(1)
     {
-        //mp3_update();
-        wait_for_user();
+        mp3_update();
+        wait(10);
     }
+
+    mp3_stop();
 }
-
-
