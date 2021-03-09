@@ -3,7 +3,8 @@
 # project subdirectory.
 #
 
-PROJECT_NAME := esp32-i2c-lcd1602-example
+PROJECT_NAME := proftaak
 
 include $(IDF_PATH)/make/project.mk
+include $(ADF_PATH)/project.mk
 
