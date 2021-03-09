@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+
 #include "esp_system.h"
 #include "driver/gpio.h"
 #include "driver/i2c.h"
@@ -13,6 +14,7 @@
 #include "i2c-lcd1602.h"
 #include "lcd-menu.h"
 #include "qwiic_twist.h"
+#include "sdcard-mp3.h"
 
 
 #define TAG "app"
@@ -61,9 +63,9 @@ static void i2c_master_init(void)
 
 // WARNING: ESP32 does not support blocking input from stdin yet, so this polls
 // the UART and effectively hangs up the SDK.
-static void wait_for_user(void)
+static void wait(unsigned int time)
 {
-    vTaskDelay(1000 / portTICK_RATE_MS);
+    vTaskDelay(time / portTICK_RATE_MS);
 }
 
 void i2c_init() 
@@ -106,6 +108,7 @@ void i2c_init()
 
 }
 
+//TODO fix if clicked 5 times without going back
 static void onEncoderPressed()
 {
     //printf("Encoder Pressed\n");
@@ -147,12 +150,20 @@ static void onEncoderMoved(int16_t diff)
 void app_main()
 {
     //xTaskCreate(&i2c_init, "lcd1602_task", 4096, NULL, 5, NULL);
+    
     i2c_init();
+
+    mp3_load("/sdcard/test.mp3");
+    wait(1000);
+    wait(1000);
+    wait(1000);
+    mp3_load("/sdcard/test.mp3");
 
     while(1)
     {
-        wait_for_user();
+        mp3_update();
+        wait(10);
     }
+
+    mp3_stop();
 }
-
-
