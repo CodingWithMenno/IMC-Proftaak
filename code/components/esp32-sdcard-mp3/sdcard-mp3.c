@@ -23,7 +23,7 @@
 
 //Static functions
 static FILE *get_file(int);
-static int my_sdcard_read_cb(audio_element_handle_t , char*, int, TickType_t , void*)
+static int my_sdcard_read_cb(audio_element_handle_t , char*, int, TickType_t , void*);
 
 audio_pipeline_handle_t pipeline;
 audio_element_handle_t i2s_stream_writer, mp3_decoder;
@@ -36,21 +36,26 @@ static FILE *get_file(int next_file)
     static FILE *file;
     static int file_index = 0;
 
-    if (next_file != CURRENT) {
+    if (next_file != CURRENT) 
+    {
         // advance to the next file
-        if (++file_index > MP3_FILE_COUNT - 1) {
+        if (++file_index > MP3_FILE_COUNT - 1) 
+        {
             file_index = 0;
         }
-        if (file != NULL) {
+        if (file != NULL) 
+        {
             fclose(file);
             file = NULL;
         }
         
     }
     // return a handle to the current file
-    if (file == NULL) {
+    if (file == NULL) 
+    {
         file = fopen(mp3_file[file_index], "r");
-        if (!file) {
+        if (!file) 
+        {
             printf("Error opening file");
             return NULL;
         }
@@ -61,9 +66,8 @@ static FILE *get_file(int next_file)
 static int my_sdcard_read_cb(audio_element_handle_t el, char *buf, int len, TickType_t wait_time, void *ctx)
 {
     int read_len = fread(buf, 1, len, get_file(CURRENT));
-    if (read_len == 0) {
+    if (read_len == 0)
         read_len = AEL_IO_DONE;
-    }
     return read_len;
 }
 
@@ -80,7 +84,8 @@ void mp3_init()
     esp_periph_init(&periph_cfg);
 
     ESP_LOGI(TAG, "[1.1] Start SD card peripheral");
-    periph_sdcard_cfg_t sdcard_cfg = {
+    periph_sdcard_cfg_t sdcard_cfg = 
+    {
         .root = "/sdcard",
         .card_detect_pin = SD_CARD_INTR_GPIO, //GPIO_NUM_34
     };
@@ -89,12 +94,12 @@ void mp3_init()
     esp_periph_start(sdcard_handle);
 
     // Wait until sdcard was mounted
-    while (!periph_sdcard_is_mounted(sdcard_handle)) {
+    while (!periph_sdcard_is_mounted(sdcard_handle))
         vTaskDelay(100 / portTICK_PERIOD_MS);
-    }
 
     ESP_LOGI(TAG, "[1.3] Initialize Touch peripheral");
-    periph_touch_cfg_t touch_cfg = {
+    periph_touch_cfg_t touch_cfg = 
+    {
         .touch_mask = TOUCH_SEL_SET | TOUCH_SEL_PLAY | TOUCH_SEL_VOLUP | TOUCH_SEL_VOLDWN,
         .tap_threshold_percent = 70,
     };
@@ -155,14 +160,17 @@ void mp3_update()
 	*/
 	audio_event_iface_msg_t msg;
 	esp_err_t ret = audio_event_iface_listen(evt, &msg, portMAX_DELAY);
-	if (ret != ESP_OK) {
+	if (ret != ESP_OK) 
+    {
 		ESP_LOGE(TAG, "[ * ] Event interface error : %d", ret);
 		return;
 	}
-	if (msg.source_type == AUDIO_ELEMENT_TYPE_ELEMENT) {
+	if (msg.source_type == AUDIO_ELEMENT_TYPE_ELEMENT) 
+    {
 		// Set music info for a new song to be played
 		if (msg.source == (void *) mp3_decoder
-			&& msg.cmd == AEL_MSG_CMD_REPORT_MUSIC_INFO) {
+			&& msg.cmd == AEL_MSG_CMD_REPORT_MUSIC_INFO) 
+            {
 			audio_element_info_t music_info = {0};
 			audio_element_getinfo(mp3_decoder, &music_info);
 			ESP_LOGI(TAG, "[ * ] Received music info from mp3 decoder, sample_rates=%d, bits=%d, ch=%d",
@@ -173,9 +181,11 @@ void mp3_update()
 		}
 		// Advance to the next song when previous finishes
 		if (msg.source == (void *) i2s_stream_writer
-			&& msg.cmd == AEL_MSG_CMD_REPORT_STATUS) {
+			&& msg.cmd == AEL_MSG_CMD_REPORT_STATUS) 
+            {
 			audio_element_state_t el_state = audio_element_get_state(i2s_stream_writer);
-			if (el_state == AEL_STATE_FINISHED) {
+			if (el_state == AEL_STATE_FINISHED) 
+            {
 				ESP_LOGI(TAG, "[ * ] Finished, advancing to the next song");
 				audio_pipeline_stop(pipeline);
 				audio_pipeline_wait_for_stop(pipeline);
