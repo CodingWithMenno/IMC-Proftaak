@@ -243,14 +243,26 @@ int menu_initMenus(i2c_lcd1602_info_t *lcd_info)
     }
 
     LCD_MENU_ITEM *itemsRadioMenu = lcdMenus[RADIO_MENU_ID].items;
-    //Radio item
+    //538
     itemsRadioMenu[0].id = 0;
     strcpy(itemsRadioMenu[0].text, "538");
-    itemsRadioMenu[0].xCoord = 7;
+    itemsRadioMenu[0].xCoord = 2;
     itemsRadioMenu[0].yCoord = 2;
-    itemsRadioMenu[0].onClick = NULL;
+    itemsRadioMenu[0].onClick = &onClickRadio538;
+    //Q
+    itemsRadioMenu[1].id = 1;
+    strcpy(itemsRadioMenu[1].text, "Qmusic");
+    itemsRadioMenu[1].xCoord = 7;
+    itemsRadioMenu[1].yCoord = 2;
+    itemsRadioMenu[1].onClick = &onClickRadioQ;
+    //Sky
+    itemsRadioMenu[2].id = 2;
+    strcpy(itemsRadioMenu[2].text, "SKY");
+    itemsRadioMenu[2].xCoord = 15;
+    itemsRadioMenu[2].yCoord = 2;
+    itemsRadioMenu[2].onClick = &onClickRadioSky;
     //Fill-up item
-    itemsRadioMenu[1].id = INVALID;
+    itemsRadioMenu[3].id = INVALID;
 
 
     //Klok menu

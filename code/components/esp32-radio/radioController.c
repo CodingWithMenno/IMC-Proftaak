@@ -41,6 +41,8 @@
 
 #include "radioController.h"
 
+void radio_start(void*);
+
 static const char *TAG = "HTTP_MP3_EXAMPLE";
 
 static int isPlaying = 0;
@@ -55,24 +57,25 @@ void radio_switch(char channel[])
 
     if (strcmp(channel, "538") == 0)
     {
-        // Ip = "https://20103.live.streamtheworld.com/TLPSTR09.mp3";
-        Ip = "https://icecast-qmusicnl-cdp.triple-it.nl/Qmusic_nl_live_96.mp3";
-        radio_start(Ip);
+        Ip = "https://21253.live.streamtheworld.com/RADIO538.mp3";
+        xTaskCreate(&radio_start, "startup radio", 1024 * 2, (void*) Ip, 10, NULL);
     }
-    else if(strcmp(channel, "Q") == 0)
+    else if(strcmp(channel, "Qmusic") == 0)
     {
         Ip = "https://icecast-qmusicnl-cdp.triple-it.nl/Qmusic_nl_live_96.mp3";
-        radio_start(Ip);
+        xTaskCreate(&radio_start, "startup radio", 1024 * 2, (void*) Ip, 10, NULL);
     }
     else if (strcmp(channel, "SKY") == 0)
     {
         Ip = "https://19993.live.streamtheworld.com/SKYRADIO.mp3";
-        radio_start(Ip);
+        xTaskCreate(&radio_start, "startup radio", 1024 * 2, (void*) Ip, 10, NULL);
     } 
 }
 
-void radio_start(char *Ip)
+void radio_start(void *ip)
 {
+    char *Ip = (char*) ip;
+
     if(isPlaying)
         radio_stop();
 
@@ -148,6 +151,7 @@ void radio_start(char *Ip)
     audio_pipeline_run(pipeline);
 
     isPlaying = 1;
+    vTaskDelete(NULL);
 }
 
 void radio_update()
@@ -201,4 +205,5 @@ void radio_stop()
     esp_periph_set_destroy(set);
 
     isPlaying = 0;
+    ESP_LOGI(TAG, "[ 7 ] Finished");
 }

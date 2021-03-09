@@ -105,15 +105,10 @@ void i2c_init()
     qwiic_twist_init(qwiic_info);
     menu_initMenus(lcd_info);
     qwiic_twist_start_task(qwiic_info);
-
-
 }
 
-//TODO fix if clicked 5 times without going back
 static void onEncoderPressed()
 {
-    //printf("Encoder Pressed\n");
-    
     clickCounter++;
     if(clickCounter == 5)
     {
@@ -125,47 +120,40 @@ static void onEncoderPressed()
 
 static void onEncoderClicked()
 {
-    //printf("Encoder clicked\n");
     if (!wentBack)
     {
         menu_onClick(lcd_info);
     }
     clickCounter = 0;
     wentBack = false; 
-    
-       
 }
 
 static void onEncoderMoved(int16_t diff)
 {
     if(diff>0)
     {
-        //printf("Encoder Moved: right\n");
         menu_goToNextItem(lcd_info); 
     } else 
     {
-        //printf("Encoder Moved: left\n");
         menu_goToPreviousitem(lcd_info);
     }
 }
 
 void app_main()
 {
-    //xTaskCreate(&i2c_init, "lcd1602_task", 4096, NULL, 5, NULL);
-    
     i2c_init();
 
-    mp3_load("/sdcard/test.mp3");
-    wait(1000);
-    wait(1000);
-    wait(1000);
-    mp3_load("/sdcard/test.mp3");
+    // mp3_load("/sdcard/test.mp3");
+    // wait(1000);
+    // wait(1000);
+    // wait(1000);
+    // mp3_load("/sdcard/test.mp3");
 
     while(1)
     {
-        mp3_update();
+        // mp3_update();
         wait(10);
     }
 
-    mp3_stop();
+    // mp3_stop();
 }
