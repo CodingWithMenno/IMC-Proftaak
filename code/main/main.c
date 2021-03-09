@@ -153,12 +153,12 @@ void app_main()
     //xTaskCreate(&i2c_init, "lcd1602_task", 4096, NULL, 5, NULL);
     i2c_init();
     
-    mp3_init();
-    mp3_start();
+    sdcard_mp3_init();
+    //mp3_start();
 
     while(1)
     {
-        mp3_update();
+        sdcard_mp3_update();
         wait_for_user();
     }
 }
