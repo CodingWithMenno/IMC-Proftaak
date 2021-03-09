@@ -1,7 +1,9 @@
 #ifndef RADIOCONTROLLER_H
 #define RADIOCONTROLLER_H
 
-void radioSwitch(char[]);
-void startRadio(char *Ip);
+void radio_switch(char[]);
+void radio_start(char *Ip);
+void radio_update();
+void radio_stop();
 
 #endif

@@ -16,7 +16,7 @@ void onClickMainEcho(i2c_lcd1602_info_t* lcd_info)
 void onClickMainRadio(i2c_lcd1602_info_t* lcd_info)
 {
     displayMenu(lcd_info, RADIO_MENU_ID);
-    radioSwitch(lcdMenus[RADIO_MENU_ID].items[0].text);
+    radio_switch(lcdMenus[RADIO_MENU_ID].items[0].text);
 }
 
 void onClickMainClock(i2c_lcd1602_info_t* lcd_info)
