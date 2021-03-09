@@ -16,7 +16,7 @@
 #include "periph_sdcard.h"
 #include "board.h"
 
-static void cleanUp();
+static void mp3_stop();
 
 static const char *TAG = "SDCARD_MP3_EXAMPLE";
 
@@ -31,7 +31,7 @@ void mp3_load(char* fileName)
 {
     if (isPlaying)
     {
-        cleanUp();
+        mp3_stop();
     }
     
 
@@ -108,12 +108,17 @@ void mp3_update()
         && (((int)msg.data == AEL_STATUS_STATE_STOPPED) || ((int)msg.data == AEL_STATUS_STATE_FINISHED))) 
     {
         ESP_LOGW(TAG, "[ * ] Stop event received");
-        cleanUp();
+        mp3_stop();
     }
 }
 
-static void cleanUp()
+void mp3_stop()
 {
+    if (!isPlaying)
+    {
+        return;
+    }
+
     ESP_LOGI(TAG, "[ 7 ] Stop audio_pipeline");
     audio_pipeline_terminate(pipeline);
 
