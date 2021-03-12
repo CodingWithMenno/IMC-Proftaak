@@ -15,8 +15,7 @@
 #include "esp_peripherals.h"
 #include "periph_sdcard.h"
 #include "board.h"
-
-static void mp3_stop();
+#include "sdcard-mp3.h"
 
 static const char *TAG = "SDCARD_MP3_EXAMPLE";
 
@@ -33,7 +32,6 @@ void mp3_load(char* fileName)
     {
         mp3_stop();
     }
-    
 
     esp_log_level_set("*", ESP_LOG_WARN);
     esp_log_level_set(TAG, ESP_LOG_INFO);

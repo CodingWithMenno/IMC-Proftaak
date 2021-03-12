@@ -161,5 +161,4 @@ void app_main()
     }
 
     radio_stop();
-    mp3_stop();
 }
