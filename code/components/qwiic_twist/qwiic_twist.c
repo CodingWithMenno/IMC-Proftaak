@@ -19,6 +19,19 @@ static const char *TAG = "QWIIC_TWIST";
 
 void qwiic_twist_task(void* pvParameters);
 
+esp_err_t qwiic_twist_change_address(qwiic_twist_t* config) {
+	
+	xSemaphoreTake( config->xMutex, portMAX_DELAY );
+	
+	//esp_err_t err = smbus_read_byte(config->smbus_info, QWIIC_TWIST_CHANGE_ADDRESS, result);
+	
+	smbus_write_byte(config->smbus_info, QWIIC_TWIST_CHANGE_ADDRESS, 0x3F);
+	
+	xSemaphoreGive( config->xMutex );
+	
+	return ESP_OK;
+}
+
 esp_err_t qwiic_twist_init(qwiic_twist_t* config) {
 
     // Set up the SMBus

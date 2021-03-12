@@ -42,7 +42,8 @@ enum qwiic_twist_reg {
 	QWIIC_TWIST_LED_BRIGHTNESS_RED = 0x0D,
 	QWIIC_TWIST_LED_BRIGHTNESS_GREEN = 0x0E,
 	QWIIC_TWIST_LED_BRIGHTNESS_BLUE = 0x0F,
-	QWIIC_TWIST_TURN_INTERRUPT_TIMEOUT_LSB = 0x16
+	QWIIC_TWIST_TURN_INTERRUPT_TIMEOUT_LSB = 0x16,
+	QWIIC_TWIST_CHANGE_ADDRESS = 0x18
 };
 
 
@@ -64,6 +65,7 @@ typedef struct
 	
 } qwiic_twist_t;
 
+esp_err_t qwiic_twist_change_address(qwiic_twist_t* config);
 
 esp_err_t qwiic_twist_init(qwiic_twist_t* config);
 
