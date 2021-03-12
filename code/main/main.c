@@ -15,6 +15,7 @@
 #include "lcd-menu.h"
 #include "qwiic_twist.h"
 #include "sdcard-mp3.h"
+#include "radioController.h"
 
 
 #define TAG "app"
@@ -143,6 +144,10 @@ void app_main()
 {
     i2c_init();
 
+    // radio_switch("538");
+    // wait(10000);
+    // radio_switch("SKY");
+
     // mp3_load("/sdcard/test.mp3");
     // wait(1000);
     // wait(1000);
@@ -151,9 +156,10 @@ void app_main()
 
     while(1)
     {
-        // mp3_update();
+        mp3_update();
         wait(10);
     }
 
-    // mp3_stop();
+    radio_stop();
+    mp3_stop();
 }

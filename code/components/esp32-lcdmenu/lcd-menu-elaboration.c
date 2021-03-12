@@ -33,7 +33,7 @@ void onEnterRadio()
 void onExitRadio()
 {
     printf("Exited the radio menu\n");
-    radio_stop();
+    radio_reset();
 }
 
 void onClickRadio538()

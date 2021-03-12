@@ -286,7 +286,7 @@ esp_err_t qwiic_twist_start_task(qwiic_twist_t* config) {
 		config->task_time = 100;
 	}
 	ESP_LOGI(TAG, "Starting task");
-	xTaskCreate(qwiic_twist_task, "qwiic_twist_task", 1024 * 2, (void*)config, 10, NULL);
+	xTaskCreate(qwiic_twist_task, "qwiic_twist_task", 1024 * 4, (void*)config, 10, NULL);
 			
 	return ESP_OK;
 }

@@ -45,11 +45,27 @@ void radio_start(void*);
 
 static const char *TAG = "HTTP_MP3_EXAMPLE";
 
+static int isInit = 0;
 static int isPlaying = 0;
 audio_pipeline_handle_t pipeline;
 audio_element_handle_t http_stream_reader, i2s_stream_writer, mp3_decoder;
 audio_event_iface_handle_t evt;
 esp_periph_set_handle_t set;
+
+int _http_stream_event_handle(http_stream_event_msg_t *msg)
+{
+    if (msg->event_id == HTTP_STREAM_RESOLVE_ALL_TRACKS) {
+        return ESP_OK;
+    }
+
+    if (msg->event_id == HTTP_STREAM_FINISH_TRACK) {
+        return http_stream_next_track(msg->el);
+    }
+    if (msg->event_id == HTTP_STREAM_FINISH_PLAYLIST) {
+        return http_stream_fetch_again(msg->el);
+    }
+    return ESP_OK;
+}
 
 void radio_switch(char channel[])
 {    
@@ -58,17 +74,17 @@ void radio_switch(char channel[])
     if (strcmp(channel, "538") == 0)
     {
         Ip = "https://21253.live.streamtheworld.com/RADIO538.mp3";
-        xTaskCreate(&radio_start, "startup radio", 1024 * 2, (void*) Ip, 10, NULL);
+        radio_start((void*) Ip);
     }
     else if(strcmp(channel, "Qmusic") == 0)
     {
         Ip = "https://icecast-qmusicnl-cdp.triple-it.nl/Qmusic_nl_live_96.mp3";
-        xTaskCreate(&radio_start, "startup radio", 1024 * 2, (void*) Ip, 10, NULL);
+        radio_start((void*) Ip);
     }
     else if (strcmp(channel, "SKY") == 0)
     {
         Ip = "https://19993.live.streamtheworld.com/SKYRADIO.mp3";
-        xTaskCreate(&radio_start, "startup radio", 1024 * 2, (void*) Ip, 10, NULL);
+        radio_start((void*) Ip);
     } 
 }
 
@@ -76,8 +92,14 @@ void radio_start(void *ip)
 {
     char *Ip = (char*) ip;
 
-    if(isPlaying)
-        radio_stop();
+    if (isInit)
+    {
+        audio_element_set_uri(http_stream_reader, ip);
+        radio_reset(Ip);
+        audio_pipeline_run(pipeline);
+        isPlaying = 1;
+        return;
+    }
 
     esp_err_t err = nvs_flash_init();
     if (err == ESP_ERR_NVS_NO_FREE_PAGES) {
@@ -96,6 +118,10 @@ void radio_start(void *ip)
     esp_log_level_set("*", ESP_LOG_WARN);
     esp_log_level_set(TAG, ESP_LOG_DEBUG);
 
+    // ESP_LOGI(TAG, "[ 1 ] Start audio codec chip");
+    // audio_board_handle_t board_handle = audio_board_init();
+    // audio_hal_ctrl_codec(board_handle->audio_hal, AUDIO_HAL_CODEC_MODE_DECODE, AUDIO_HAL_CTRL_START);
+
     ESP_LOGI(TAG, "[2.0] Create audio pipeline for playback");
     audio_pipeline_cfg_t pipeline_cfg = DEFAULT_AUDIO_PIPELINE_CONFIG();
     pipeline = audio_pipeline_init(&pipeline_cfg);
@@ -103,6 +129,9 @@ void radio_start(void *ip)
 
     ESP_LOGI(TAG, "[2.1] Create http stream to read data");
     http_stream_cfg_t http_cfg = HTTP_STREAM_CFG_DEFAULT();
+    http_cfg.event_handle = _http_stream_event_handle;
+    http_cfg.type = AUDIO_STREAM_READER;
+    http_cfg.enable_playlist_parser = true;
     http_stream_reader = http_stream_init(&http_cfg);
 
     ESP_LOGI(TAG, "[2.2] Create i2s stream to write data to codec chip");
@@ -133,8 +162,11 @@ void radio_start(void *ip)
         .ssid = CONFIG_WIFI_SSID,
         .password = CONFIG_WIFI_PASSWORD,
     };
+    
     esp_periph_handle_t wifi_handle = periph_wifi_init(&wifi_cfg);
+    ESP_LOGI(TAG, "[ 3.3 ] Start and wait for Wi-Fi network");
     esp_periph_start(set, wifi_handle);
+    ESP_LOGI(TAG, "[ 3.4 ] Start and wait for Wi-Fi network");
     periph_wifi_wait_for_connected(wifi_handle, portMAX_DELAY);
 
     ESP_LOGI(TAG, "[ 4 ] Set up  event listener");
@@ -151,7 +183,7 @@ void radio_start(void *ip)
     audio_pipeline_run(pipeline);
 
     isPlaying = 1;
-    vTaskDelete(NULL);
+    isInit = 1;
 }
 
 void radio_update()
@@ -173,11 +205,18 @@ void radio_update()
 
 }
 
+void radio_reset()
+{
+    audio_pipeline_stop(pipeline);
+    audio_pipeline_wait_for_stop(pipeline);
+    audio_element_reset_state(mp3_decoder);
+    audio_element_reset_state(i2s_stream_writer);
+    audio_pipeline_reset_ringbuffer(pipeline);
+    audio_pipeline_reset_items_state(pipeline);
+}
+
 void radio_stop()
 {
-    if(!isPlaying)
-        return;
-
     ESP_LOGI(TAG, "[ 6 ] Stop audio_pipeline");
     audio_pipeline_stop(pipeline);
     audio_pipeline_wait_for_stop(pipeline);
