@@ -70,7 +70,12 @@ static void wait(unsigned int time)
     vTaskDelay(time / portTICK_RATE_MS);
 }
 
-void i2c_init() 
+void radioInit()
+{
+    xTaskCreate(&radio_task, "radio_task", 1024 * 2, NULL, 8, NULL);
+}
+
+void i2cInit() 
 {
     // Set up I2C
     i2c_master_init();
@@ -142,7 +147,8 @@ static void onEncoderMoved(int16_t diff)
 
 void app_main()
 {
-    i2c_init();
+    i2cInit();
+    radioInit();
 
     // radio_switch("538");
     // wait(10000);
@@ -156,9 +162,9 @@ void app_main()
 
     while(1)
     {
-        mp3_update();
+        // mp3_update();
         wait(10);
     }
 
-    radio_stop();
+    // radio_stop();
 }
