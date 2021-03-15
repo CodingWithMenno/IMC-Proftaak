@@ -148,7 +148,7 @@ static void onEncoderMoved(int16_t diff)
 void app_main()
 {
     i2cInit();
-    radioInit();
+    // radioInit();
 
     // radio_switch("538");
     // wait(10000);

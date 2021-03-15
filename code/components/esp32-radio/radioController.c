@@ -78,8 +78,9 @@ void radio_switch(char channel[])
 
     if (strcmp(ip, " ") != 0)
     {
+        if (isPlaying)
+            reset();
         audio_element_set_uri(http_stream_reader, ip);
-        reset();
         audio_pipeline_run(pipeline);
         isPlaying = 1;
     }
@@ -92,6 +93,7 @@ void radio_task(void *p)
     radioMutex = xSemaphoreCreateMutex();
     init();
 
+    running = 1;
     while (running)
     {
         if (isPlaying)
@@ -107,10 +109,17 @@ void radio_task(void *p)
     stop();
 }
 
+void radio_quit()
+{
+    xSemaphoreTake(radioMutex, portMAX_DELAY);
+    running = 0;
+    xSemaphoreGive(radioMutex);
+}
+
 static void update()
 {
     audio_event_iface_msg_t msg;
-    esp_err_t ret = audio_event_iface_listen(evt, &msg, 100);
+    esp_err_t ret = audio_event_iface_listen(evt, &msg, 200);
     if (ret != ESP_OK) {
         ESP_LOGE(TAG, "[ * ] Event interface error : %d", ret);
         return;
@@ -140,6 +149,8 @@ static void update()
 
 static void init()
 {
+    xSemaphoreTake(radioMutex, portMAX_DELAY);
+
     esp_err_t err = nvs_flash_init();
     if (err == ESP_ERR_NVS_NO_FREE_PAGES) 
     {
@@ -190,20 +201,26 @@ static void init()
 
     ESP_LOGI(TAG, "[2.6] Set up  uri (http as http_stream, mp3 as mp3 decoder, and default output is i2s)");
     audio_element_set_uri(http_stream_reader, "https://icecast-qmusicnl-cdp.triple-it.nl/Qmusic_nl_live_96.mp3");
-
+    
+    static int isWifiInit = 0;
     ESP_LOGI(TAG, "[ 3 ] Start and wait for Wi-Fi network");
-    esp_periph_config_t periph_cfg = DEFAULT_ESP_PERIPH_SET_CONFIG();
+    static esp_periph_config_t periph_cfg = DEFAULT_ESP_PERIPH_SET_CONFIG();
     set = esp_periph_set_init(&periph_cfg);
     periph_wifi_cfg_t wifi_cfg = {
         .ssid = CONFIG_WIFI_SSID,
         .password = CONFIG_WIFI_PASSWORD,
     };
-    
-    esp_periph_handle_t wifi_handle = periph_wifi_init(&wifi_cfg);
+
+    static esp_periph_handle_t wifi_handle;
+    wifi_handle = periph_wifi_init(&wifi_cfg);
     ESP_LOGI(TAG, "[ 3.3 ] Start and wait for Wi-Fi network");
-    esp_periph_start(set, wifi_handle);
-    ESP_LOGI(TAG, "[ 3.4 ] Start and wait for Wi-Fi network");
-    periph_wifi_wait_for_connected(wifi_handle, portMAX_DELAY);
+    if (!isWifiInit)
+    {
+        esp_periph_start(set, wifi_handle);
+        ESP_LOGI(TAG, "[ 3.4 ] Start and wait for Wi-Fi network");
+        periph_wifi_wait_for_connected(wifi_handle, portMAX_DELAY);
+        isWifiInit = 1;
+    }
 
     ESP_LOGI(TAG, "[ 4 ] Set up  event listener");
     audio_event_iface_cfg_t evt_cfg = AUDIO_EVENT_IFACE_DEFAULT_CFG();
@@ -216,6 +233,7 @@ static void init()
     audio_event_iface_set_listener(esp_periph_set_get_event_iface(set), evt);
 
     isInit = 1;
+    xSemaphoreGive(radioMutex);
 }
 
 void radio_reset()
@@ -262,10 +280,12 @@ static void stop()
     audio_element_deinit(http_stream_reader);
     audio_element_deinit(i2s_stream_writer);
     audio_element_deinit(mp3_decoder);
-    esp_periph_set_destroy(set);
+    // esp_periph_set_destroy(set);
 
     isPlaying = 0;
+    isInit = 0;
     ESP_LOGI(TAG, "[ 7 ] Finished");
+    vTaskDelete(NULL);
 }
 
 static int _http_stream_event_handle(http_stream_event_msg_t *msg)

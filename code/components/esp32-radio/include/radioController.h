@@ -4,5 +4,6 @@
 void radio_switch(char[]);
 void radio_task(void*);
 void radio_reset();
+void radio_quit();
 
 #endif
