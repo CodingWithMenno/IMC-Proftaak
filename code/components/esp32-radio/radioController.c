@@ -211,6 +211,7 @@ static void init()
         .password = CONFIG_WIFI_PASSWORD,
     };
 
+    ESP_LOGI(TAG, "[ 3.2 ] Start and wait for Wi-Fi network");
     static esp_periph_handle_t wifi_handle;
     wifi_handle = periph_wifi_init(&wifi_cfg);
     ESP_LOGI(TAG, "[ 3.3 ] Start and wait for Wi-Fi network");

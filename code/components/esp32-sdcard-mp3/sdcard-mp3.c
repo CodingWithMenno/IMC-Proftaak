@@ -140,7 +140,7 @@ void mp3_stop()
     audio_element_deinit(fatfs_stream_reader);
     audio_element_deinit(i2s_stream_writer);
     audio_element_deinit(mp3_decoder);
-    esp_periph_set_destroy(set);
+    // esp_periph_set_destroy(set);
 
     isPlaying = 0;
 }
