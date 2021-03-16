@@ -41,68 +41,119 @@
 
 #include "radioController.h"
 
-void radio_start(void*);
+static void init();
+static void update();
+static void stop();
+static void reset();
+static int _http_stream_event_handle(http_stream_event_msg_t*);
 
 static const char *TAG = "HTTP_MP3_EXAMPLE";
 
+static int running = 1;
 static int isInit = 0;
 static int isPlaying = 0;
+
+SemaphoreHandle_t radioMutex;
+
 audio_pipeline_handle_t pipeline;
 audio_element_handle_t http_stream_reader, i2s_stream_writer, mp3_decoder;
 audio_event_iface_handle_t evt;
 esp_periph_set_handle_t set;
 
-int _http_stream_event_handle(http_stream_event_msg_t *msg)
-{
-    if (msg->event_id == HTTP_STREAM_RESOLVE_ALL_TRACKS) {
-        return ESP_OK;
-    }
-
-    if (msg->event_id == HTTP_STREAM_FINISH_TRACK) {
-        return http_stream_next_track(msg->el);
-    }
-    if (msg->event_id == HTTP_STREAM_FINISH_PLAYLIST) {
-        return http_stream_fetch_again(msg->el);
-    }
-    return ESP_OK;
-}
-
 void radio_switch(char channel[])
 {    
-    char* Ip;
+    if (!isInit)
+        return;
+
+    char* ip = " ";
+
+    xSemaphoreTake(radioMutex, portMAX_DELAY);
 
     if (strcmp(channel, "538") == 0)
-    {
-        Ip = "https://21253.live.streamtheworld.com/RADIO538.mp3";
-        radio_start((void*) Ip);
-    }
+        ip = "https://21253.live.streamtheworld.com/RADIO538.mp3";
     else if(strcmp(channel, "Qmusic") == 0)
-    {
-        Ip = "https://icecast-qmusicnl-cdp.triple-it.nl/Qmusic_nl_live_96.mp3";
-        radio_start((void*) Ip);
-    }
+        ip = "https://icecast-qmusicnl-cdp.triple-it.nl/Qmusic_nl_live_96.mp3";
     else if (strcmp(channel, "SKY") == 0)
-    {
-        Ip = "https://19993.live.streamtheworld.com/SKYRADIO.mp3";
-        radio_start((void*) Ip);
-    } 
-}
+        ip = "https://19993.live.streamtheworld.com/SKYRADIO.mp3";
 
-void radio_start(void *ip)
-{
-    char *Ip = (char*) ip;
-
-    if (isInit)
+    if (strcmp(ip, " ") != 0)
     {
+        if (isPlaying)
+            reset();
         audio_element_set_uri(http_stream_reader, ip);
-        radio_reset(Ip);
         audio_pipeline_run(pipeline);
         isPlaying = 1;
+    }
+
+    xSemaphoreGive(radioMutex);
+}
+
+void radio_task(void *p)
+{
+    radioMutex = xSemaphoreCreateMutex();
+    init();
+
+    running = 1;
+    while (running)
+    {
+        if (isPlaying)
+        {
+            xSemaphoreTake(radioMutex, portMAX_DELAY);
+            update();
+            xSemaphoreGive(radioMutex);
+        }
+        
+        vTaskDelay(50 / portTICK_RATE_MS);
+    }
+    
+    stop();
+}
+
+void radio_quit()
+{
+    xSemaphoreTake(radioMutex, portMAX_DELAY);
+    running = 0;
+    xSemaphoreGive(radioMutex);
+}
+
+static void update()
+{
+    audio_event_iface_msg_t msg;
+    esp_err_t ret = audio_event_iface_listen(evt, &msg, 200);
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "[ * ] Event interface error : %d", ret);
         return;
     }
 
+    if (msg.source_type == AUDIO_ELEMENT_TYPE_ELEMENT
+        && msg.source == (void *) mp3_decoder
+        && msg.cmd == AEL_MSG_CMD_REPORT_MUSIC_INFO) {
+        audio_element_info_t music_info = {0};
+        audio_element_getinfo(mp3_decoder, &music_info);
+
+        ESP_LOGI(TAG, "[ * ] Receive music info from mp3 decoder, sample_rates=%d, bits=%d, ch=%d",
+                    music_info.sample_rates, music_info.bits, music_info.channels);
+
+        audio_element_setinfo(i2s_stream_writer, &music_info);
+        i2s_stream_set_clk(i2s_stream_writer, music_info.sample_rates, music_info.bits, music_info.channels);
+        return;
+    }
+
+    /* Stop when the last pipeline element (i2s_stream_writer in this case) receives stop event */
+    if ((int)msg.data == AEL_STATUS_STATE_FINISHED) 
+    {
+        ESP_LOGW(TAG, "[ * ] Stop event received");
+        reset();
+    }
+}
+
+static void init()
+{
+    xSemaphoreTake(radioMutex, portMAX_DELAY);
+
     esp_err_t err = nvs_flash_init();
-    if (err == ESP_ERR_NVS_NO_FREE_PAGES) {
+    if (err == ESP_ERR_NVS_NO_FREE_PAGES) 
+    {
         // NVS partition was truncated and needs to be erased
         // Retry nvs_flash_init
         ESP_ERROR_CHECK(nvs_flash_erase());
@@ -117,10 +168,6 @@ void radio_start(void *ip)
 
     esp_log_level_set("*", ESP_LOG_WARN);
     esp_log_level_set(TAG, ESP_LOG_DEBUG);
-
-    // ESP_LOGI(TAG, "[ 1 ] Start audio codec chip");
-    // audio_board_handle_t board_handle = audio_board_init();
-    // audio_hal_ctrl_codec(board_handle->audio_hal, AUDIO_HAL_CODEC_MODE_DECODE, AUDIO_HAL_CTRL_START);
 
     ESP_LOGI(TAG, "[2.0] Create audio pipeline for playback");
     audio_pipeline_cfg_t pipeline_cfg = DEFAULT_AUDIO_PIPELINE_CONFIG();
@@ -153,21 +200,28 @@ void radio_start(void *ip)
     audio_pipeline_link(pipeline, &link_tag[0], 3);
 
     ESP_LOGI(TAG, "[2.6] Set up  uri (http as http_stream, mp3 as mp3 decoder, and default output is i2s)");
-    audio_element_set_uri(http_stream_reader, Ip);
-
+    audio_element_set_uri(http_stream_reader, "https://icecast-qmusicnl-cdp.triple-it.nl/Qmusic_nl_live_96.mp3");
+    
+    static int isWifiInit = 0;
     ESP_LOGI(TAG, "[ 3 ] Start and wait for Wi-Fi network");
-    esp_periph_config_t periph_cfg = DEFAULT_ESP_PERIPH_SET_CONFIG();
+    static esp_periph_config_t periph_cfg = DEFAULT_ESP_PERIPH_SET_CONFIG();
     set = esp_periph_set_init(&periph_cfg);
     periph_wifi_cfg_t wifi_cfg = {
         .ssid = CONFIG_WIFI_SSID,
         .password = CONFIG_WIFI_PASSWORD,
     };
-    
-    esp_periph_handle_t wifi_handle = periph_wifi_init(&wifi_cfg);
+
+    ESP_LOGI(TAG, "[ 3.2 ] Start and wait for Wi-Fi network");
+    static esp_periph_handle_t wifi_handle;
+    wifi_handle = periph_wifi_init(&wifi_cfg);
     ESP_LOGI(TAG, "[ 3.3 ] Start and wait for Wi-Fi network");
-    esp_periph_start(set, wifi_handle);
-    ESP_LOGI(TAG, "[ 3.4 ] Start and wait for Wi-Fi network");
-    periph_wifi_wait_for_connected(wifi_handle, portMAX_DELAY);
+    if (!isWifiInit)
+    {
+        esp_periph_start(set, wifi_handle);
+        ESP_LOGI(TAG, "[ 3.4 ] Start and wait for Wi-Fi network");
+        periph_wifi_wait_for_connected(wifi_handle, portMAX_DELAY);
+        isWifiInit = 1;
+    }
 
     ESP_LOGI(TAG, "[ 4 ] Set up  event listener");
     audio_event_iface_cfg_t evt_cfg = AUDIO_EVENT_IFACE_DEFAULT_CFG();
@@ -179,33 +233,18 @@ void radio_start(void *ip)
     ESP_LOGI(TAG, "[4.2] Listening event from peripherals");
     audio_event_iface_set_listener(esp_periph_set_get_event_iface(set), evt);
 
-    ESP_LOGI(TAG, "[ 5 ] Start audio_pipeline");
-    audio_pipeline_run(pipeline);
-
-    isPlaying = 1;
     isInit = 1;
-}
-
-void radio_update()
-{
-    if(!isPlaying)
-        return;
-
-    audio_event_iface_msg_t msg;
-    audio_event_iface_listen(evt, &msg, portMAX_DELAY);
-
-    /* Stop when the last pipeline element (i2s_stream_writer in this case) receives stop event */
-    if (msg.source_type == AUDIO_ELEMENT_TYPE_ELEMENT && msg.source == (void *) i2s_stream_writer
-        && msg.cmd == AEL_MSG_CMD_REPORT_STATUS
-        && (((int)msg.data == AEL_STATUS_STATE_STOPPED) || ((int)msg.data == AEL_STATUS_STATE_FINISHED))) 
-        {
-        ESP_LOGW(TAG, "[ * ] Stop event received");
-        radio_stop();
-    }
-
+    xSemaphoreGive(radioMutex);
 }
 
 void radio_reset()
+{
+    xSemaphoreTake(radioMutex, portMAX_DELAY);
+    reset();
+    xSemaphoreGive(radioMutex);
+}
+
+static void reset()
 {
     audio_pipeline_stop(pipeline);
     audio_pipeline_wait_for_stop(pipeline);
@@ -213,9 +252,10 @@ void radio_reset()
     audio_element_reset_state(i2s_stream_writer);
     audio_pipeline_reset_ringbuffer(pipeline);
     audio_pipeline_reset_items_state(pipeline);
+    isPlaying = 0;
 }
 
-void radio_stop()
+static void stop()
 {
     ESP_LOGI(TAG, "[ 6 ] Stop audio_pipeline");
     audio_pipeline_stop(pipeline);
@@ -241,8 +281,22 @@ void radio_stop()
     audio_element_deinit(http_stream_reader);
     audio_element_deinit(i2s_stream_writer);
     audio_element_deinit(mp3_decoder);
-    esp_periph_set_destroy(set);
+    // esp_periph_set_destroy(set);
 
     isPlaying = 0;
+    isInit = 0;
     ESP_LOGI(TAG, "[ 7 ] Finished");
+    vTaskDelete(NULL);
+}
+
+static int _http_stream_event_handle(http_stream_event_msg_t *msg)
+{
+    if (msg->event_id == HTTP_STREAM_RESOLVE_ALL_TRACKS) 
+        return ESP_OK;
+
+    if (msg->event_id == HTTP_STREAM_FINISH_TRACK) 
+        return http_stream_next_track(msg->el);
+    if (msg->event_id == HTTP_STREAM_FINISH_PLAYLIST) 
+        return http_stream_fetch_again(msg->el);
+    return ESP_OK;
 }

@@ -2,8 +2,8 @@
 #define RADIOCONTROLLER_H
 
 void radio_switch(char[]);
-void radio_update();
+void radio_task(void*);
 void radio_reset();
-void radio_stop();
+void radio_quit();
 
 #endif

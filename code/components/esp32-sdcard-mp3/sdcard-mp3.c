@@ -20,6 +20,8 @@
 static const char *TAG = "SDCARD_MP3_EXAMPLE";
 
 static int isPlaying = 0;
+static int isInit = 0;
+
 audio_pipeline_handle_t pipeline;
 audio_element_handle_t fatfs_stream_reader, i2s_stream_writer, mp3_decoder;
 audio_event_iface_handle_t evt;
@@ -29,20 +31,21 @@ esp_periph_set_handle_t set;
 void mp3_load(char* fileName)
 {
     if (isPlaying)
-    {
         mp3_stop();
-    }
 
     esp_log_level_set("*", ESP_LOG_WARN);
     esp_log_level_set(TAG, ESP_LOG_INFO);
 
-    ESP_LOGI(TAG, "[ 1 ] Mount sdcard");
-    // Initialize peripherals management
-    esp_periph_config_t periph_cfg = DEFAULT_ESP_PERIPH_SET_CONFIG();
-    set = esp_periph_set_init(&periph_cfg);
+    if (!isInit)
+    {
+        ESP_LOGI(TAG, "[ 1 ] Mount sdcard");
+        // Initialize peripherals management
+        esp_periph_config_t periph_cfg = DEFAULT_ESP_PERIPH_SET_CONFIG();
+        set = esp_periph_set_init(&periph_cfg);
 
-    // Initialize SD Card peripheral
-    audio_board_sdcard_init(set, SD_MODE_1_LINE);
+        // Initialize SD Card peripheral
+        audio_board_sdcard_init(set, SD_MODE_1_LINE);
+    }
 
     ESP_LOGI(TAG, "[3.0] Create audio pipeline for playback");
     audio_pipeline_cfg_t pipeline_cfg = DEFAULT_AUDIO_PIPELINE_CONFIG();
@@ -88,6 +91,7 @@ void mp3_load(char* fileName)
     audio_pipeline_run(pipeline);
 
     isPlaying = 1;
+    isInit = 1;
 }
 
 void mp3_update()
@@ -118,6 +122,7 @@ void mp3_stop()
     }
 
     ESP_LOGI(TAG, "[ 7 ] Stop audio_pipeline");
+    audio_pipeline_stop(pipeline);
     audio_pipeline_terminate(pipeline);
 
     audio_pipeline_unregister(pipeline, fatfs_stream_reader);
@@ -139,7 +144,7 @@ void mp3_stop()
     audio_element_deinit(fatfs_stream_reader);
     audio_element_deinit(i2s_stream_writer);
     audio_element_deinit(mp3_decoder);
-    esp_periph_set_destroy(set);
+    // esp_periph_set_destroy(set);
 
     isPlaying = 0;
 }
