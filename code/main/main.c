@@ -163,7 +163,8 @@ void app_main()
     while(1)
     {
         // mp3_update();
-        wait(10);
+        // mp3_addToQueue("/sdcard/test.mp3");
+        wait(5000);
     }
 
     // radio_stop();

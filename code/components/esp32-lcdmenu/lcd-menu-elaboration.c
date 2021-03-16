@@ -29,14 +29,13 @@ void onClickMainClock(i2c_lcd1602_info_t* lcd_info)
 void onEnterRadio()
 {
     printf("Entered the radio menu\n");
-    xTaskCreate(&radio_task, "radio_task", 1024 * 2, NULL, 8, NULL);
+    xTaskCreate(&radio_task, "radio_task", 1024 * 3, NULL, 8, NULL);
 }
 
 void onExitRadio()
 {
     printf("Exited the radio menu\n");
     radio_quit();
-    // radio_reset();
 }
 
 void onClickRadio538()
@@ -58,13 +57,13 @@ void onClickRadioSky()
 void onEnterClock()
 {
     printf("Entered the clock menu\n");
-    mp3_play("/sdcard/test.mp3");
+    xTaskCreate(&mp3_task, "radio_task", 1024 * 3, NULL, 8, NULL);
 }
 
 void onExitClock()
 {
     printf("Exited the clock menu\n");
-    mp3_stop();
+    mp3_stopTask();
 }
 
 void onUpdateClock(void *p)

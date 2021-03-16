@@ -61,7 +61,7 @@ void enqueue(Queue *q , char *element)
                 // }
 
                 //Insert the element in its rear side
-                q->elements[q->rear] = (char *) malloc((sizeof element + 1)* sizeof(char));
+                q->elements[q->rear] = (char *) malloc(sizeof(element) + 1);
 
                 strcpy(q->elements[q->rear], element);
         }

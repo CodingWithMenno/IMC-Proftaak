@@ -22,6 +22,7 @@ static const char *TAG = "SDCARD_MP3_EXAMPLE";
 
 static void init();
 static void update();
+static void reset();
 
 SemaphoreHandle_t mp3Mutex;
 Queue *playlist;
@@ -37,6 +38,7 @@ esp_periph_set_handle_t set;
 void mp3_task(void *p)
 {
     init("/sdcard/test.mp3");
+    
     playlist = createQueue(10);
     mp3Mutex = xSemaphoreCreateMutex();
 
@@ -47,9 +49,12 @@ void mp3_task(void *p)
 
         if (!isPlaying)
         {
-            char *audioFile = front(playlist);
-            dequeue(playlist);
-            mp3_play(audioFile);
+            // char *audioFile = front(playlist);
+            // if (audioFile != NULL)
+            // {
+                // dequeue(playlist);
+                // mp3_play(audioFile);
+            // }
         }
 
         update();
@@ -58,10 +63,11 @@ void mp3_task(void *p)
         vTaskDelay(50 / portTICK_RATE_MS);
     }
     
-    mp3_stop();
+    reset();
     free(playlist->elements);
     free(playlist);
     playlist = NULL;
+    vTaskDelete(NULL);
 }
 
 void mp3_addToQueue(char *fileName)
@@ -80,20 +86,23 @@ void mp3_stopTask()
         return;
 
     xSemaphoreTake(mp3Mutex, portMAX_DELAY);
-    isPlaying = 0;
+    isRunning = 0;
     xSemaphoreGive(mp3Mutex);
 }
 
 void mp3_play(char* fileName)
 {
     if (isRunning)
-        return;
-
-    init(fileName);
+    {
+        reset();
+        audio_element_set_uri(fatfs_stream_reader, fileName);
+    } else
+    {
+        init(fileName);
+    }
 
     ESP_LOGI(TAG, "[ 5 ] Start audio_pipeline");
     audio_pipeline_run(pipeline);
-
     isPlaying = 1;
 }
 
@@ -103,23 +112,52 @@ static void update()
         return;
 
     audio_event_iface_msg_t msg;
-    audio_event_iface_listen(evt, &msg, portMAX_DELAY);
+    esp_err_t ret = audio_event_iface_listen(evt, &msg, 200);
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "[ * ] Event interface error : %d", ret);
+        return;
+    }
+
+    if (msg.source_type == AUDIO_ELEMENT_TYPE_ELEMENT
+        && msg.source == (void *) mp3_decoder
+        && msg.cmd == AEL_MSG_CMD_REPORT_MUSIC_INFO) {
+        audio_element_info_t music_info = {0};
+        audio_element_getinfo(mp3_decoder, &music_info);
+
+        ESP_LOGI(TAG, "[ * ] Receive music info from mp3 decoder, sample_rates=%d, bits=%d, ch=%d",
+                    music_info.sample_rates, music_info.bits, music_info.channels);
+
+        audio_element_setinfo(i2s_stream_writer, &music_info);
+        i2s_stream_set_clk(i2s_stream_writer, music_info.sample_rates, music_info.bits, music_info.channels);
+        return;
+    }
 
     /* Stop when the last pipeline element (i2s_stream_writer in this case) receives stop event */
-    if (msg.source_type == AUDIO_ELEMENT_TYPE_ELEMENT && msg.source == (void *) i2s_stream_writer
-        && msg.cmd == AEL_MSG_CMD_REPORT_STATUS
-        && (((int)msg.data == AEL_STATUS_STATE_STOPPED) || ((int)msg.data == AEL_STATUS_STATE_FINISHED))) 
+    if ((int)msg.data == AEL_STATUS_STATE_FINISHED) 
     {
         ESP_LOGW(TAG, "[ * ] Stop event received");
-        // mp3_stop();
-        isPlaying = 0;
+        reset();
     }
+}
+
+static void reset()
+{
+    if (!isPlaying)
+        return;
+
+    audio_pipeline_stop(pipeline);
+    audio_pipeline_wait_for_stop(pipeline);
+    audio_element_reset_state(mp3_decoder);
+    audio_element_reset_state(i2s_stream_writer);
+    audio_pipeline_reset_ringbuffer(pipeline);
+    audio_pipeline_reset_items_state(pipeline);
+    isPlaying = 0;
 }
 
 static void init(char *fileName)
 {
     if (isPlaying)
-    mp3_stop();
+        mp3_stop();
 
     esp_log_level_set("*", ESP_LOG_WARN);
     esp_log_level_set(TAG, ESP_LOG_INFO);
@@ -175,16 +213,13 @@ static void init(char *fileName)
     ESP_LOGI(TAG, "[4.2] Listening event from peripherals");
     audio_event_iface_set_listener(esp_periph_set_get_event_iface(set), evt);
 
-    isPlaying = 0;
     isInit = 1;
 }
 
 void mp3_stop()
 {
-    if (!isPlaying)
-    {
+    if (!isInit)
         return;
-    }
 
     ESP_LOGI(TAG, "[ 7 ] Stop audio_pipeline");
     audio_pipeline_stop(pipeline);
