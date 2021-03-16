@@ -64,7 +64,7 @@ void mp3_task(void *p)
     }
     
     reset();
-    freeQueue(playlist);
+    freeQueue(&playlist);
     vTaskDelete(NULL);
 }
 

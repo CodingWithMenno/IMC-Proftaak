@@ -12,6 +12,6 @@ typedef struct queue
 
 void enqueue(Queue**, char*);
 char* front(Queue**);
-void freeQueue(Queue*);
+void freeQueue(Queue**);
 
 #endif  // MP3_Q

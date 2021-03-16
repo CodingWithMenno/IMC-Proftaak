@@ -38,9 +38,12 @@ void enqueue(Queue **q , char *data)
         return;
 }
 
-void freeQueue(Queue *q)
+void freeQueue(Queue **q)
 {
-        Queue *current = q;
+        if (*q == NULL)
+                return;
+
+        Queue *current = *q;
         Queue *next;
         while (current != NULL)
         {
