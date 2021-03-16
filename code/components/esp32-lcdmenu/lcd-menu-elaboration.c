@@ -70,3 +70,10 @@ void onUpdateClock(void *p)
 {
     strcpy(lcdMenus[CLOCK_MENU_ID].items[0].text, (char*) p);
 }
+
+void onClickClockItem()
+{
+    mp3_addToQueue("/sdcard/test1.mp3");
+    mp3_addToQueue("/sdcard/test2.mp3");
+    mp3_addToQueue("/sdcard/test1.mp3");
+}

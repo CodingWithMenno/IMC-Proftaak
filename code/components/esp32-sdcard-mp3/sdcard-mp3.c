@@ -39,9 +39,7 @@ void mp3_task(void *p)
 {
     init("/sdcard/test.mp3");
     
-    playlist = (Queue*) malloc(sizeof(Queue));
-    playlist->data = NULL;
-    playlist->next = NULL;
+    playlist = NULL;
     mp3Mutex = xSemaphoreCreateMutex();
 
     isRunning = 1;
@@ -49,9 +47,9 @@ void mp3_task(void *p)
     {
         xSemaphoreTake(mp3Mutex, portMAX_DELAY);
 
-        if (!isPlaying)
+        if (!isPlaying && playlist != NULL)
         {
-            char *audioFile = front(playlist);
+            char *audioFile = front(&playlist);
             if (audioFile != NULL)
             {
                 mp3_play(audioFile);
@@ -76,7 +74,7 @@ void mp3_addToQueue(char *fileName)
         return;
 
     xSemaphoreTake(mp3Mutex, portMAX_DELAY);
-    enqueue(playlist, fileName);
+    enqueue(&playlist, fileName);
     xSemaphoreGive(mp3Mutex);
 }
 

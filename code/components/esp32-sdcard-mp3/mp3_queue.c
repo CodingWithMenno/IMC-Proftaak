@@ -3,40 +3,39 @@
 #include <string.h>
 #include "mp3_queue.h"
 
-char* front(Queue *q)
+char* front(Queue **q)
 {
-        if (q == NULL)
+        if (*q == NULL)
                 return NULL;
         
+        Queue *first = *q;
+        char *data = first->data;
 
-        Queue *first = q;
-        if (first == NULL)
-                return NULL;
+        (*q) = (*q)->next;
+        free(first);
 
-        q = q->next;
-
-        return first->data;
+        return data;
 }
 
-void enqueue(Queue *q , char *data)
+void enqueue(Queue **q , char *data)
 {
-        if (q->data == NULL)
-        {
-                q->data = data;
-                return;
-        }
-        
-
-        Queue *temp = q;
-        while (temp->next != NULL)
-        {
-                temp = temp->next;
-        }
-        
         Queue *newNode = (Queue*) malloc(sizeof(Queue));
-        temp->next = newNode;
+        Queue *last = *q;
+
         newNode->data = data;
         newNode->next = NULL;
+
+        if (*q == NULL)
+        {
+                *q = newNode;
+                return;
+        }
+
+        while (last->next != NULL)
+                last = last->next;
+        
+        last->next = newNode;
+        return;
 }
 
 void freeQueue(Queue *q)

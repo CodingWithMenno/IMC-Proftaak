@@ -10,8 +10,8 @@ typedef struct queue
         struct queue *next;
 } Queue;
 
-void enqueue(Queue*, char*);
-char* front(Queue*);
+void enqueue(Queue**, char*);
+char* front(Queue**);
 void freeQueue(Queue*);
 
 #endif  // MP3_Q
