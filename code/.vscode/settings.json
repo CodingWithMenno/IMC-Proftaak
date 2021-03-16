@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "radiocontroller.h": "c",
+        "sdcard-mp3.h": "c"
+    }
+}

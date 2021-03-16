@@ -16,9 +16,16 @@
 #include "periph_sdcard.h"
 #include "board.h"
 #include "sdcard-mp3.h"
+#include "mp3_queue.h"
 
 static const char *TAG = "SDCARD_MP3_EXAMPLE";
 
+static void init();
+static void update();
+
+SemaphoreHandle_t mp3Mutex;
+Queue *playlist;
+static int isRunning = 0;
 static int isPlaying = 0;
 static int isInit = 0;
 
@@ -27,11 +34,92 @@ audio_element_handle_t fatfs_stream_reader, i2s_stream_writer, mp3_decoder;
 audio_event_iface_handle_t evt;
 esp_periph_set_handle_t set;
 
+void mp3_task(void *p)
+{
+    init("/sdcard/test.mp3");
+    playlist = createQueue(10);
+    mp3Mutex = xSemaphoreCreateMutex();
 
-void mp3_load(char* fileName)
+    isRunning = 1;
+    while (isRunning)
+    {
+        xSemaphoreTake(mp3Mutex, portMAX_DELAY);
+
+        if (!isPlaying)
+        {
+            char *audioFile = front(playlist);
+            dequeue(playlist);
+            mp3_play(audioFile);
+        }
+
+        update();
+
+        xSemaphoreGive(mp3Mutex);
+        vTaskDelay(50 / portTICK_RATE_MS);
+    }
+    
+    mp3_stop();
+    free(playlist->elements);
+    free(playlist);
+    playlist = NULL;
+}
+
+void mp3_addToQueue(char *fileName)
+{
+    if (!isRunning)
+        return;
+
+    xSemaphoreTake(mp3Mutex, portMAX_DELAY);
+    enqueue(playlist, fileName);
+    xSemaphoreGive(mp3Mutex);
+}
+
+void mp3_stopTask()
+{
+    if (!isRunning)
+        return;
+
+    xSemaphoreTake(mp3Mutex, portMAX_DELAY);
+    isPlaying = 0;
+    xSemaphoreGive(mp3Mutex);
+}
+
+void mp3_play(char* fileName)
+{
+    if (isRunning)
+        return;
+
+    init(fileName);
+
+    ESP_LOGI(TAG, "[ 5 ] Start audio_pipeline");
+    audio_pipeline_run(pipeline);
+
+    isPlaying = 1;
+}
+
+static void update()
+{
+    if (!isPlaying)
+        return;
+
+    audio_event_iface_msg_t msg;
+    audio_event_iface_listen(evt, &msg, portMAX_DELAY);
+
+    /* Stop when the last pipeline element (i2s_stream_writer in this case) receives stop event */
+    if (msg.source_type == AUDIO_ELEMENT_TYPE_ELEMENT && msg.source == (void *) i2s_stream_writer
+        && msg.cmd == AEL_MSG_CMD_REPORT_STATUS
+        && (((int)msg.data == AEL_STATUS_STATE_STOPPED) || ((int)msg.data == AEL_STATUS_STATE_FINISHED))) 
+    {
+        ESP_LOGW(TAG, "[ * ] Stop event received");
+        // mp3_stop();
+        isPlaying = 0;
+    }
+}
+
+static void init(char *fileName)
 {
     if (isPlaying)
-        mp3_stop();
+    mp3_stop();
 
     esp_log_level_set("*", ESP_LOG_WARN);
     esp_log_level_set(TAG, ESP_LOG_INFO);
@@ -87,31 +175,8 @@ void mp3_load(char* fileName)
     ESP_LOGI(TAG, "[4.2] Listening event from peripherals");
     audio_event_iface_set_listener(esp_periph_set_get_event_iface(set), evt);
 
-    ESP_LOGI(TAG, "[ 5 ] Start audio_pipeline");
-    audio_pipeline_run(pipeline);
-
-    isPlaying = 1;
+    isPlaying = 0;
     isInit = 1;
-}
-
-void mp3_update()
-{
-    if (!isPlaying)
-    {
-        return;
-    }
-
-    audio_event_iface_msg_t msg;
-    audio_event_iface_listen(evt, &msg, portMAX_DELAY);
-
-    /* Stop when the last pipeline element (i2s_stream_writer in this case) receives stop event */
-    if (msg.source_type == AUDIO_ELEMENT_TYPE_ELEMENT && msg.source == (void *) i2s_stream_writer
-        && msg.cmd == AEL_MSG_CMD_REPORT_STATUS
-        && (((int)msg.data == AEL_STATUS_STATE_STOPPED) || ((int)msg.data == AEL_STATUS_STATE_FINISHED))) 
-    {
-        ESP_LOGW(TAG, "[ * ] Stop event received");
-        mp3_stop();
-    }
 }
 
 void mp3_stop()

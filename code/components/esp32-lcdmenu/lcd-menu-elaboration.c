@@ -29,7 +29,7 @@ void onClickMainClock(i2c_lcd1602_info_t* lcd_info)
 void onEnterRadio()
 {
     printf("Entered the radio menu\n");
-    xTaskCreate(&radio_task, "radio_task", 1024 * 3, NULL, 8, NULL);
+    xTaskCreate(&radio_task, "radio_task", 1024 * 2, NULL, 8, NULL);
 }
 
 void onExitRadio()
@@ -58,7 +58,7 @@ void onClickRadioSky()
 void onEnterClock()
 {
     printf("Entered the clock menu\n");
-    mp3_load("/sdcard/test.mp3");
+    mp3_play("/sdcard/test.mp3");
 }
 
 void onExitClock()

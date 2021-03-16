@@ -1,7 +1,7 @@
-#include "mp3_queue.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include <Windows.h>
+#include <string.h>
+#include "mp3_queue.h"
 
 Queue * createQueue(int maxElements)
 {
@@ -25,6 +25,7 @@ void dequeue(Queue *q)
                 q->size--;
                 free(q->elements[q->front]);
                 q->front++;
+                q->rear--;
                 //As we fill elements in circular fashion
                 // if(q->front == q->capacity)
                 //         q->front = 0;
@@ -52,16 +53,14 @@ void enqueue(Queue *q , char *element)
         else
         {
                 q->size++;
-                q->rear = q->rear + 1;
+                q->rear++;
                 //As we fill the queue in a circular way
-                if(q->rear == q->capacity)
-                {
-                        q->rear = 0;
-                }
+                // if(q->rear == q->capacity)
+                // {
+                //         q->rear = 0;
+                // }
+
                 //Insert the element in its rear side
-
-                printf("testing\n");
-
                 q->elements[q->rear] = (char *) malloc((sizeof element + 1)* sizeof(char));
 
                 strcpy(q->elements[q->rear], element);

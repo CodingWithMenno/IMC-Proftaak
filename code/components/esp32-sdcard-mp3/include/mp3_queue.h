@@ -14,8 +14,8 @@ typedef struct Queue
 } Queue;
 
 Queue * createQueue(int);
-void dequeue(Queue);
-void enqueue(Queue, char*);
-char* front(Queue);
+void dequeue(Queue*);
+void enqueue(Queue*, char*);
+char* front(Queue*);
 
 #endif  // MP3_Q
