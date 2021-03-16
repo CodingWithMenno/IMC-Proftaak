@@ -3,67 +3,52 @@
 #include <string.h>
 #include "mp3_queue.h"
 
-Queue * createQueue(int maxElements)
-{
-        //Create a Queue
-        Queue *q;
-        q = (Queue *)malloc(sizeof(Queue));
-        //Initialise its properties
-        q->elements = (char**)malloc(sizeof(char*)*maxElements);
-        q->size = 0;
-        q->capacity = maxElements;
-        q->front = 0;
-        q->rear = -1;
-        //Return the pointer
-        return q;
-}
-
-void dequeue(Queue *q)
-{
-        if(q->size!=0)
-        {
-                q->size--;
-                free(q->elements[q->front]);
-                q->front++;
-                q->rear--;
-                //As we fill elements in circular fashion
-                // if(q->front == q->capacity)
-                //         q->front = 0;
-        }
-        return;
-}
-
 char* front(Queue *q)
 {
-        if(q->size!=0)
-        {
-                /* Return the element which is at the front*/
-                return q->elements[q->front];
-        }
-        return NULL;
+        if (q == NULL)
+                return NULL;
+        
+
+        Queue *first = q;
+        if (first == NULL)
+                return NULL;
+
+        q = q->next;
+
+        return first->data;
 }
 
-void enqueue(Queue *q , char *element)
+void enqueue(Queue *q , char *data)
 {
-        //If the Queue is full, we cannot push an element into it as there is no space for it.
-        if(q->size == q->capacity)
+        if (q->data == NULL)
         {
-                printf("Queue is Full\n");
+                q->data = data;
+                return;
         }
-        else
+        
+
+        Queue *temp = q;
+        while (temp->next != NULL)
         {
-                q->size++;
-                q->rear++;
-                //As we fill the queue in a circular way
-                // if(q->rear == q->capacity)
-                // {
-                //         q->rear = 0;
-                // }
-
-                //Insert the element in its rear side
-                q->elements[q->rear] = (char *) malloc(sizeof(element) + 1);
-
-                strcpy(q->elements[q->rear], element);
+                temp = temp->next;
         }
-        return;
+        
+        Queue *newNode = (Queue*) malloc(sizeof(Queue));
+        temp->next = newNode;
+        newNode->data = data;
+        newNode->next = NULL;
+}
+
+void freeQueue(Queue *q)
+{
+        Queue *current = q;
+        Queue *next;
+        while (current != NULL)
+        {
+                next = current->next;
+                free(current);
+                current = next;
+        }
+
+        q = NULL;
 }

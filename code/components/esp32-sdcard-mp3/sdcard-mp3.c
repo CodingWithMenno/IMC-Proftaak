@@ -39,7 +39,9 @@ void mp3_task(void *p)
 {
     init("/sdcard/test.mp3");
     
-    playlist = createQueue(10);
+    playlist = (Queue*) malloc(sizeof(Queue));
+    playlist->data = NULL;
+    playlist->next = NULL;
     mp3Mutex = xSemaphoreCreateMutex();
 
     isRunning = 1;
@@ -49,12 +51,12 @@ void mp3_task(void *p)
 
         if (!isPlaying)
         {
-            // char *audioFile = front(playlist);
-            // if (audioFile != NULL)
-            // {
-                // dequeue(playlist);
-                // mp3_play(audioFile);
-            // }
+            char *audioFile = front(playlist);
+            if (audioFile != NULL)
+            {
+                mp3_play(audioFile);
+            }
+            
         }
 
         update();
@@ -64,9 +66,7 @@ void mp3_task(void *p)
     }
     
     reset();
-    free(playlist->elements);
-    free(playlist);
-    playlist = NULL;
+    freeQueue(playlist);
     vTaskDelete(NULL);
 }
 

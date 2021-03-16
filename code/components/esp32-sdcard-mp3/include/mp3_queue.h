@@ -4,18 +4,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-typedef struct Queue
+typedef struct queue
 {
-        int capacity;
-        int size;
-        int front;
-        int rear;
-        char **elements;
+        char *data;
+        struct queue *next;
 } Queue;
 
-Queue * createQueue(int);
-void dequeue(Queue*);
 void enqueue(Queue*, char*);
 char* front(Queue*);
+void freeQueue(Queue*);
 
 #endif  // MP3_Q
