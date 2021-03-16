@@ -10,6 +10,8 @@
 #include "sdkconfig.h"
 #include "esp32/rom/uart.h"
 
+#include "mcp23x17.h"
+
 #include "smbus.h"
 #include "i2c-lcd1602.h"
 #include "lcd-menu.h"
@@ -33,6 +35,9 @@
 #define LCD_NUM_ROWS			 4
 #define LCD_NUM_COLUMNS			 40
 #define LCD_NUM_VIS_COLUMNS		 20
+
+// A0, A1, A2 pins are grounded
+#define INTA_GPIO 19  // INTA pin
 
 //lcd general settings
 static i2c_lcd1602_info_t *lcd_info;
@@ -145,9 +150,40 @@ static void onEncoderMoved(int16_t diff)
     }
 }
 
+void test_gpio()
+{
+    mcp23x17_t dev;
+    memset(&dev, 0, sizeof(mcp23x17_t));
+
+    ESP_ERROR_CHECK(mcp23x17_init_desc(&dev, 0, MCP23X17_ADDR_BASE, I2C_MASTER_SDA_IO, I2C_MASTER_SCL_IO));
+
+    // Setup PORTA0 as input
+    mcp23x17_set_mode(&dev, 0, MCP23X17_GPIO_INPUT);
+    // Setup interrupt on it
+    mcp23x17_set_interrupt(&dev, 0, MCP23X17_INT_ANY_EDGE);
+
+    gpio_set_direction(INTA_GPIO, GPIO_MODE_INPUT);
+    gpio_set_intr_type(INTA_GPIO, GPIO_INTR_ANYEDGE);
+    gpio_install_isr_service(0);
+    gpio_isr_handler_add(INTA_GPIO, intr_handler, NULL);
+
+    // Setup PORTB0 as output
+    mcp23x17_set_mode(&dev, 8, MCP23X17_GPIO_OUTPUT);
+    // do some blinking
+    bool on = true;
+    while (1)
+    {
+        mcp23x17_set_level(&dev, 8, on);
+        on = !on;
+        wait(5000);
+    }
+}
+
 void app_main()
 {
     i2cInit();
+
+    xTaskCreate(test_gpio, "test gpio", configMINIMAL_STACK_SIZE * 6, NULL, 5, NULL);
     // radioInit();
 
     // radio_switch("538");
