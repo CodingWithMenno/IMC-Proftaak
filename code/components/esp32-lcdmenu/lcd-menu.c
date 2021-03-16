@@ -24,6 +24,10 @@ static int displayMenu(i2c_lcd1602_info_t*, unsigned int);
 static int refreshMenu(i2c_lcd1602_info_t*, unsigned int, unsigned int);
 static int displayCursorOn(i2c_lcd1602_info_t*, unsigned int);
 
+//Create menu functions
+int createMenu(int, int, char*, int, void(), void(), void());
+void createMenuItem(int, int, char*, int, int, void (*onClick)());
+
 //Variable to all the lcd menu's
 static LCD_MENU *lcdMenus;
 //Variable to the current lcd menu
@@ -155,148 +159,200 @@ int menu_initMenus(i2c_lcd1602_info_t *lcd_info)
         return LCD_MENU_ERROR;
     
     //Main menu
-    lcdMenus[MAIN_MENU_ID].id = MAIN_MENU_ID;
-    strcpy(lcdMenus[MAIN_MENU_ID].text, "MENU");
-    lcdMenus[MAIN_MENU_ID].xCoord = 8;
-    lcdMenus[MAIN_MENU_ID].parent = INVALID;
-    lcdMenus[MAIN_MENU_ID].menuEnter = NULL;
-    lcdMenus[MAIN_MENU_ID].update = NULL;
-    lcdMenus[MAIN_MENU_ID].menuExit = NULL;
-    lcdMenus[MAIN_MENU_ID].items = (LCD_MENU_ITEM*) malloc(sizeof(LCD_MENU_ITEM) * MAX_ITEMS_ON_MENU);
-    if (lcdMenus[MAIN_MENU_ID].items == NULL)
-    {
-        free(lcdMenus);
-        return LCD_MENU_ERROR;
-    }
+    // lcdMenus[MAIN_MENU_ID].id = MAIN_MENU_ID;
+    // strcpy(lcdMenus[MAIN_MENU_ID].text, "MENU");
+    // lcdMenus[MAIN_MENU_ID].xCoord = 8;
+    // lcdMenus[MAIN_MENU_ID].parent = INVALID;
+    // lcdMenus[MAIN_MENU_ID].menuEnter = NULL;
+    // lcdMenus[MAIN_MENU_ID].update = NULL;
+    // lcdMenus[MAIN_MENU_ID].menuExit = NULL;
+    // lcdMenus[MAIN_MENU_ID].items = (LCD_MENU_ITEM*) malloc(sizeof(LCD_MENU_ITEM) * MAX_ITEMS_ON_MENU);
+    // if (lcdMenus[MAIN_MENU_ID].items == NULL)
+    // {
+    //     free(lcdMenus);
+    //     return LCD_MENU_ERROR;
+    // }
     
-    LCD_MENU_ITEM *itemsMainMenu = lcdMenus[MAIN_MENU_ID].items;
-    //Radio item
-    itemsMainMenu[0].id = 0;
-    strcpy(itemsMainMenu[0].text, "RADIO");
-    itemsMainMenu[0].xCoord = 2;
-    itemsMainMenu[0].yCoord = 2;
-    itemsMainMenu[0].onClick = &onClickMainRadio;
-    //Clock item
-    itemsMainMenu[1].id = 1;
-    strcpy(itemsMainMenu[1].text, "KLOK");
-    itemsMainMenu[1].xCoord = 9;
-    itemsMainMenu[1].yCoord = 2;
-    itemsMainMenu[1].onClick = &onClickMainClock;
-    //Echo item
-    itemsMainMenu[2].id = 2;
-    strcpy(itemsMainMenu[2].text, "ECHO");
-    itemsMainMenu[2].xCoord = 15;
-    itemsMainMenu[2].yCoord = 2;
-    itemsMainMenu[2].onClick = &onClickMainEcho;
-    //Fill-up item
-    itemsMainMenu[3].id = INVALID;
+    // LCD_MENU_ITEM *itemsMainMenu = lcdMenus[MAIN_MENU_ID].items;
+    // //Radio item
+    // itemsMainMenu[0].id = 0;
+    // strcpy(itemsMainMenu[0].text, "RADIO");
+    // itemsMainMenu[0].xCoord = 2;
+    // itemsMainMenu[0].yCoord = 2;
+    // itemsMainMenu[0].onClick = &onClickMainRadio;
+    // //Clock item
+    // itemsMainMenu[1].id = 1;
+    // strcpy(itemsMainMenu[1].text, "KLOK");
+    // itemsMainMenu[1].xCoord = 9;
+    // itemsMainMenu[1].yCoord = 2;
+    // itemsMainMenu[1].onClick = &onClickMainClock;
+    // //Echo item
+    // itemsMainMenu[2].id = 2;
+    // strcpy(itemsMainMenu[2].text, "ECHO");
+    // itemsMainMenu[2].xCoord = 15;
+    // itemsMainMenu[2].yCoord = 2;
+    // itemsMainMenu[2].onClick = &onClickMainEcho;
+    // //Fill-up item
+    // itemsMainMenu[3].id = INVALID;
 
 
-    //Echo menu
-    lcdMenus[ECHO_MENU_ID].id = ECHO_MENU_ID;
-    strcpy(lcdMenus[ECHO_MENU_ID].text, "MENU");
-    lcdMenus[ECHO_MENU_ID].xCoord = 8;
-    lcdMenus[ECHO_MENU_ID].parent = MAIN_MENU_ID;
-    lcdMenus[ECHO_MENU_ID].menuEnter = NULL;
-    lcdMenus[ECHO_MENU_ID].update = NULL;
-    lcdMenus[ECHO_MENU_ID].menuExit = NULL;
-    lcdMenus[ECHO_MENU_ID].items = (LCD_MENU_ITEM*) malloc(sizeof(LCD_MENU_ITEM) * MAX_ITEMS_ON_MENU);
-    if (lcdMenus[ECHO_MENU_ID].items == NULL)
-    {
-        free(lcdMenus);
-        free(lcdMenus[MAIN_MENU_ID].items);
-        return LCD_MENU_ERROR;
-    }
+    // //Echo menu
+    // lcdMenus[ECHO_MENU_ID].id = ECHO_MENU_ID;
+    // strcpy(lcdMenus[ECHO_MENU_ID].text, "MENU");
+    // lcdMenus[ECHO_MENU_ID].xCoord = 8;
+    // lcdMenus[ECHO_MENU_ID].parent = MAIN_MENU_ID;
+    // lcdMenus[ECHO_MENU_ID].menuEnter = NULL;
+    // lcdMenus[ECHO_MENU_ID].update = NULL;
+    // lcdMenus[ECHO_MENU_ID].menuExit = NULL;
+    // lcdMenus[ECHO_MENU_ID].items = (LCD_MENU_ITEM*) malloc(sizeof(LCD_MENU_ITEM) * MAX_ITEMS_ON_MENU);
+    // if (lcdMenus[ECHO_MENU_ID].items == NULL)
+    // {
+    //     free(lcdMenus);
+    //     free(lcdMenus[MAIN_MENU_ID].items);
+    //     return LCD_MENU_ERROR;
+    // }
 
-    LCD_MENU_ITEM *itemsEchoMenu = lcdMenus[ECHO_MENU_ID].items;
-    //Record item
-    itemsEchoMenu[0].id = 0;
-    strcpy(itemsEchoMenu[0].text, "RECORD");
-    itemsEchoMenu[0].xCoord = 2;
-    itemsEchoMenu[0].yCoord = 2;
-    itemsEchoMenu[0].onClick = NULL;
-    //Clips item
-    itemsEchoMenu[1].id = 1;
-    strcpy(itemsEchoMenu[1].text, "CLIPS");
-    itemsEchoMenu[1].xCoord = 13;
-    itemsEchoMenu[1].yCoord = 2;
-    itemsEchoMenu[1].onClick = NULL;
-    //Fill-up item
-    itemsEchoMenu[2].id = INVALID;
-
-
-    //Radio menu
-    lcdMenus[RADIO_MENU_ID].id = RADIO_MENU_ID;
-    strcpy(lcdMenus[RADIO_MENU_ID].text, "RADIO");
-    lcdMenus[RADIO_MENU_ID].xCoord = 7;
-    lcdMenus[RADIO_MENU_ID].parent = MAIN_MENU_ID;
-    lcdMenus[RADIO_MENU_ID].menuEnter = &onEnterRadio;
-    lcdMenus[RADIO_MENU_ID].update = NULL;
-    lcdMenus[RADIO_MENU_ID].menuExit = &onExitRadio;
-    lcdMenus[RADIO_MENU_ID].items = (LCD_MENU_ITEM*) malloc(sizeof(LCD_MENU_ITEM) * MAX_ITEMS_ON_MENU);
-    if (lcdMenus[RADIO_MENU_ID].items == NULL)
-    {
-        free(lcdMenus);
-        free(lcdMenus[MAIN_MENU_ID].items);
-        free(lcdMenus[ECHO_MENU_ID].items);
-        return LCD_MENU_ERROR;
-    }
-
-    LCD_MENU_ITEM *itemsRadioMenu = lcdMenus[RADIO_MENU_ID].items;
-    //538
-    itemsRadioMenu[0].id = 0;
-    strcpy(itemsRadioMenu[0].text, "538");
-    itemsRadioMenu[0].xCoord = 2;
-    itemsRadioMenu[0].yCoord = 2;
-    itemsRadioMenu[0].onClick = &onClickRadio538;
-    //Q
-    itemsRadioMenu[1].id = 1;
-    strcpy(itemsRadioMenu[1].text, "Qmusic");
-    itemsRadioMenu[1].xCoord = 7;
-    itemsRadioMenu[1].yCoord = 2;
-    itemsRadioMenu[1].onClick = &onClickRadioQ;
-    //Sky
-    itemsRadioMenu[2].id = 2;
-    strcpy(itemsRadioMenu[2].text, "SKY");
-    itemsRadioMenu[2].xCoord = 15;
-    itemsRadioMenu[2].yCoord = 2;
-    itemsRadioMenu[2].onClick = &onClickRadioSky;
-    //Fill-up item
-    itemsRadioMenu[3].id = INVALID;
+    // LCD_MENU_ITEM *itemsEchoMenu = lcdMenus[ECHO_MENU_ID].items;
+    // //Record item
+    // itemsEchoMenu[0].id = 0;
+    // strcpy(itemsEchoMenu[0].text, "RECORD");
+    // itemsEchoMenu[0].xCoord = 2;
+    // itemsEchoMenu[0].yCoord = 2;
+    // itemsEchoMenu[0].onClick = NULL;
+    // //Clips item
+    // itemsEchoMenu[1].id = 1;
+    // strcpy(itemsEchoMenu[1].text, "CLIPS");
+    // itemsEchoMenu[1].xCoord = 13;
+    // itemsEchoMenu[1].yCoord = 2;
+    // itemsEchoMenu[1].onClick = NULL;
+    // //Fill-up item
+    // itemsEchoMenu[2].id = INVALID;
 
 
-    //Klok menu
-    lcdMenus[CLOCK_MENU_ID].id = CLOCK_MENU_ID;
-    strcpy(lcdMenus[CLOCK_MENU_ID].text, "KLOK");
-    lcdMenus[CLOCK_MENU_ID].xCoord = 8;
-    lcdMenus[CLOCK_MENU_ID].parent = MAIN_MENU_ID;
-    lcdMenus[CLOCK_MENU_ID].menuEnter = &onEnterClock;
-    lcdMenus[CLOCK_MENU_ID].update = &onUpdateClock;
-    lcdMenus[CLOCK_MENU_ID].menuExit = &onExitClock;
-    lcdMenus[CLOCK_MENU_ID].items = (LCD_MENU_ITEM*) malloc(sizeof(LCD_MENU_ITEM) * MAX_ITEMS_ON_MENU);
-    if (lcdMenus[CLOCK_MENU_ID].items == NULL)
-    {
-        free(lcdMenus);
-        free(lcdMenus[MAIN_MENU_ID].items);
-        free(lcdMenus[ECHO_MENU_ID].items);
-        free(lcdMenus[RADIO_MENU_ID].items);
-        return LCD_MENU_ERROR;
-    }
+    // //Radio menu
+    // lcdMenus[RADIO_MENU_ID].id = RADIO_MENU_ID;
+    // strcpy(lcdMenus[RADIO_MENU_ID].text, "RADIO");
+    // lcdMenus[RADIO_MENU_ID].xCoord = 7;
+    // lcdMenus[RADIO_MENU_ID].parent = MAIN_MENU_ID;
+    // lcdMenus[RADIO_MENU_ID].menuEnter = &onEnterRadio;
+    // lcdMenus[RADIO_MENU_ID].update = NULL;
+    // lcdMenus[RADIO_MENU_ID].menuExit = &onExitRadio;
+    // lcdMenus[RADIO_MENU_ID].items = (LCD_MENU_ITEM*) malloc(sizeof(LCD_MENU_ITEM) * MAX_ITEMS_ON_MENU);
+    // if (lcdMenus[RADIO_MENU_ID].items == NULL)
+    // {
+    //     free(lcdMenus);
+    //     free(lcdMenus[MAIN_MENU_ID].items);
+    //     free(lcdMenus[ECHO_MENU_ID].items);
+    //     return LCD_MENU_ERROR;
+    // }
 
-    LCD_MENU_ITEM *itemsClockMenu = lcdMenus[CLOCK_MENU_ID].items;
-    //Clock item
-    itemsClockMenu[0].id = 0;
-    strcpy(itemsClockMenu[0].text, "tijd");
-    itemsClockMenu[0].xCoord = 8;
-    itemsClockMenu[0].yCoord = 2;
-    itemsClockMenu[0].onClick = NULL;
-    //Fill-up item
-    itemsClockMenu[1].id = INVALID;
+    // LCD_MENU_ITEM *itemsRadioMenu = lcdMenus[RADIO_MENU_ID].items;
+    // //538
+    // itemsRadioMenu[0].id = 0;
+    // strcpy(itemsRadioMenu[0].text, "538");
+    // itemsRadioMenu[0].xCoord = 2;
+    // itemsRadioMenu[0].yCoord = 2;
+    // itemsRadioMenu[0].onClick = &onClickRadio538;
+    // //Q
+    // itemsRadioMenu[1].id = 1;
+    // strcpy(itemsRadioMenu[1].text, "Qmusic");
+    // itemsRadioMenu[1].xCoord = 7;
+    // itemsRadioMenu[1].yCoord = 2;
+    // itemsRadioMenu[1].onClick = &onClickRadioQ;
+    // //Sky
+    // itemsRadioMenu[2].id = 2;
+    // strcpy(itemsRadioMenu[2].text, "SKY");
+    // itemsRadioMenu[2].xCoord = 15;
+    // itemsRadioMenu[2].yCoord = 2;
+    // itemsRadioMenu[2].onClick = &onClickRadioSky;
+    // //Fill-up item
+    // itemsRadioMenu[3].id = INVALID;
 
+
+    // //Klok menu
+    // lcdMenus[CLOCK_MENU_ID].id = CLOCK_MENU_ID;
+    // strcpy(lcdMenus[CLOCK_MENU_ID].text, "KLOK");
+    // lcdMenus[CLOCK_MENU_ID].xCoord = 8;
+    // lcdMenus[CLOCK_MENU_ID].parent = MAIN_MENU_ID;
+    // lcdMenus[CLOCK_MENU_ID].menuEnter = &onEnterClock;
+    // lcdMenus[CLOCK_MENU_ID].update = &onUpdateClock;
+    // lcdMenus[CLOCK_MENU_ID].menuExit = &onExitClock;
+    // lcdMenus[CLOCK_MENU_ID].items = (LCD_MENU_ITEM*) malloc(sizeof(LCD_MENU_ITEM) * MAX_ITEMS_ON_MENU);
+    // if (lcdMenus[CLOCK_MENU_ID].items == NULL)
+    // {
+    //     free(lcdMenus);
+    //     free(lcdMenus[MAIN_MENU_ID].items);
+    //     free(lcdMenus[ECHO_MENU_ID].items);
+    //     free(lcdMenus[RADIO_MENU_ID].items);
+    //     return LCD_MENU_ERROR;
+    // }
+
+    // LCD_MENU_ITEM *itemsClockMenu = lcdMenus[CLOCK_MENU_ID].items;
+    // //Clock item
+    // itemsClockMenu[0].id = 0;
+    // strcpy(itemsClockMenu[0].text, "tijd");
+    // itemsClockMenu[0].xCoord = 8;
+    // itemsClockMenu[0].yCoord = 2;
+    // itemsClockMenu[0].onClick = NULL;
+    // //Fill-up item
+    // itemsClockMenu[1].id = INVALID;
+
+    createMenu(MAIN_MENU_ID, INVALID, "MENU", 8, NULL, NULL, NULL);
+    createMenuItem(MAIN_MENU_ID, 0, "RADIO", 2, 2,&onClickMainRadio);
+    createMenuItem(MAIN_MENU_ID, 1, "KLOK", 9, 2, &onClickMainClock);
+    createMenuItem(MAIN_MENU_ID, 2, "ECHO", 15, 2, &onClickMainEcho);
+    createMenuItem(MAIN_MENU_ID, INVALID, "", 0, 0, NULL);
+
+    createMenu(RADIO_MENU_ID, MAIN_MENU_ID, "RADIO", 7, &onEnterRadio, NULL, &onExitRadio);
+    createMenuItem(RADIO_MENU_ID, 0, "538", 2, 2, NULL);
+    createMenuItem(RADIO_MENU_ID, 1, "Qmusic", 7, 2, NULL);
+    createMenuItem(RADIO_MENU_ID, 2, "SKY", 15, 2, NULL);
+    createMenuItem(RADIO_MENU_ID, INVALID, "", 0, 0, NULL);
+
+    createMenu(ECHO_MENU_ID, MAIN_MENU_ID, "ECHO", 8, NULL, NULL, NULL);
+    createMenuItem(ECHO_MENU_ID, 0, "RECORD", 2, 2, NULL);
+    createMenuItem(ECHO_MENU_ID, 1, "CLIPS", 13, 2, NULL);
+    createMenuItem(ECHO_MENU_ID, INVALID, "", 0, 0, NULL);
+
+    createMenu(CLOCK_MENU_ID, MAIN_MENU_ID, "KLOK", 7, &onEnterClock, &onUpdateClock, &onExitClock);
+    createMenuItem(CLOCK_MENU_ID, 0, "TIME", 8, 2, NULL);
+    createMenuItem(CLOCK_MENU_ID, INVALID, "", 0, 0, NULL);
+
+    printf("DOET HET ! 4");
 
     //Display the main menu
     currentLcdMenu = INVALID;
     return displayMenu(lcd_info, MAIN_MENU_ID);
+}
+
+int createMenu(int menuId, int parentId, char* displayName, int xCoord, void (*onEnter)(), void (*onUpdate)(), void (*onExit)())
+{
+    lcdMenus[menuId].id = menuId;
+    strcpy(lcdMenus[menuId].text, displayName);
+    lcdMenus[menuId].xCoord = xCoord;
+    lcdMenus[menuId].parent = parentId;
+    lcdMenus[menuId].menuEnter = (*onEnter);
+    lcdMenus[menuId].update = (*onUpdate);
+    lcdMenus[menuId].menuExit = (*onExit);
+    lcdMenus[menuId].items = (LCD_MENU_ITEM*) malloc(sizeof(LCD_MENU_ITEM) * MAX_ITEMS_ON_MENU);
+    if(lcdMenus[menuId].items == NULL)
+    {
+        // for(int i = 0; i < menuId; i++)
+        //     free(lcdMenus[i].items);
+        // free(lcdMenus);
+        // return LCD_MENU_ERROR;
+    }
+    return LCD_MENU_OKE;
+}
+
+void createMenuItem(int menuId, int id, char* displayName, int xCoord, int yCoord, void (*onClick)())
+{
+    LCD_MENU_ITEM *itemsMenu = lcdMenus[menuId].items;
+    itemsMenu[id].id = id;
+    strcpy(itemsMenu[id].text, displayName);
+    itemsMenu[id].xCoord = xCoord;
+    itemsMenu[id].yCoord = yCoord;
+    itemsMenu[id].onClick = (*onClick);
 }
 
 static void doFancyAnimation(i2c_lcd1602_info_t* lcd_info)
