@@ -230,7 +230,7 @@ int menu_initMenus(i2c_lcd1602_info_t *lcd_info)
     itemsEchoMenu[1].onClick = NULL;
     //Speech item
     itemsEchoMenu[2].id = 2;
-    strcpy(itemsEchoMenu[2].text, "SPEECH");
+    strcpy(itemsEchoMenu[2].text, "SPRAAK");
     itemsEchoMenu[2].xCoord = 14;
     itemsEchoMenu[2].yCoord = 2;
     itemsEchoMenu[2].onClick = &onClickEchoSpeech;
