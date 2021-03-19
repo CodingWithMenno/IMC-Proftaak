@@ -27,7 +27,8 @@
 
 #include "goertzel_filter.h"
 #include "goertzel.h"
-#include "sdcard-mp3.h"
+#include "i2c-lcd1602.h"
+#include "lcd-menu.h"
 
 static const char *TAG = "GOERTZEL-EXAMPLE";
 
@@ -97,6 +98,10 @@ static void detect_freq(int target_freq, float magnitude)
 
     if (logMagnitude > GOERTZEL_DETECTION_THRESHOLD) {
         ESP_LOGI(TAG, "Detection at frequency %d Hz (magnitude %.2f, log magnitude %.2f)", target_freq, magnitude, logMagnitude);
+        menu_updateMenu(menu_getLcdInfo(), (void*) "IETS");
+    } else
+    {
+        menu_updateMenu(menu_getLcdInfo(), (void*) "NIKS");
     }
 }
 

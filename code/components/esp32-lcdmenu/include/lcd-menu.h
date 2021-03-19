@@ -82,4 +82,7 @@ Function to set the cursor to the previous item in the menu
 */
 int menu_goToPreviousitem(i2c_lcd1602_info_t*);
 
+//Returns the lcd info
+i2c_lcd1602_info_t* menu_getLcdInfo();
+
 #endif

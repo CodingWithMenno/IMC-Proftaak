@@ -19,6 +19,8 @@
 
 #define INVALID 99
 
+static i2c_lcd1602_info_t *tmp_lcd_info;
+
 //Static functions
 static void doFancyAnimation(i2c_lcd1602_info_t*);
 static int displayMenu(i2c_lcd1602_info_t*, unsigned int);
@@ -38,7 +40,9 @@ int menu_updateMenu(i2c_lcd1602_info_t *lcd_info, void *p)
     if (lcdMenus[currentLcdMenu].update == NULL)
         return LCD_MENU_ERROR;
     
-    lcdMenus[currentLcdMenu].update(p);
+    if (p != NULL)
+        lcdMenus[currentLcdMenu].update(p);
+
     return refreshMenu(lcd_info, currentLcdMenu, currentMenuItem);
 }
 
@@ -143,6 +147,8 @@ static int refreshMenu(i2c_lcd1602_info_t *lcd_info, unsigned int menuToDisplay,
 
 int menu_initMenus(i2c_lcd1602_info_t *lcd_info)
 {
+    tmp_lcd_info = lcd_info;
+
     //Hides the cursor
     i2c_lcd1602_set_cursor(lcd_info, false);
 
@@ -307,6 +313,7 @@ int menu_initMenus(i2c_lcd1602_info_t *lcd_info)
     lcdMenus[SPEECH_MENU_ID].xCoord = 7;
     lcdMenus[SPEECH_MENU_ID].parent = ECHO_MENU_ID;
     lcdMenus[SPEECH_MENU_ID].menuEnter = &onEnterSpeech;
+    lcdMenus[SPEECH_MENU_ID].update = &onUpdateSpeech;
     lcdMenus[SPEECH_MENU_ID].menuExit = &onExitSpeech;
     lcdMenus[SPEECH_MENU_ID].items = (LCD_MENU_ITEM*) malloc(sizeof(LCD_MENU_ITEM) * MAX_ITEMS_ON_MENU);
     if (lcdMenus[SPEECH_MENU_ID].items == NULL)
@@ -320,8 +327,14 @@ int menu_initMenus(i2c_lcd1602_info_t *lcd_info)
     }
     
     LCD_MENU_ITEM *itemsSpeechMenu = lcdMenus[SPEECH_MENU_ID].items;
+    //Recognition item
+    itemsSpeechMenu[0].id = 0;
+    strcpy(itemsSpeechMenu[0].text, "NULL");
+    itemsSpeechMenu[0].xCoord = 8;
+    itemsSpeechMenu[0].yCoord = 2;
+    itemsSpeechMenu[0].onClick = NULL;
     //Fill-up item
-    itemsSpeechMenu[0].id = INVALID;
+    itemsSpeechMenu[1].id = INVALID;
 
 
     //Display the main menu
@@ -360,6 +373,11 @@ static void doFancyAnimation(i2c_lcd1602_info_t* lcd_info)
     }
     i2c_lcd1602_set_left_to_right(lcd_info);
     vTaskDelay(100 / portTICK_RATE_MS);
+}
+
+i2c_lcd1602_info_t* menu_getLcdInfo()
+{
+    return tmp_lcd_info;
 }
 
 #endif

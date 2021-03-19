@@ -84,6 +84,11 @@ void onEnterSpeech()
     goertzel_start();
 }
 
+void onUpdateSpeech(void *p)
+{
+    strcpy(lcdMenus[SPEECH_MENU_ID].items[0].text, (char*) p);
+}
+
 void onExitSpeech()
 {
     goertzel_stop();

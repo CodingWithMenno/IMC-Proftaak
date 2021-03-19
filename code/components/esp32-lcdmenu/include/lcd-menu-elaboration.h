@@ -18,6 +18,7 @@ void onUpdateClock(void*);
 void onExitClock();
 
 void onEnterSpeech();
+void onUpdateSpeech(void*);
 void onExitSpeech();
 
 #endif
