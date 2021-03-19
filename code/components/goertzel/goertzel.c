@@ -27,6 +27,8 @@
 
 #include "goertzel_filter.h"
 #include "goertzel.h"
+#include "i2c-lcd1602.h"
+#include "lcd-menu.h"
 
 static const char *TAG = "GOERTZEL-EXAMPLE";
 
@@ -96,15 +98,18 @@ static void detect_freq(int target_freq, float magnitude)
 
     if (logMagnitude > GOERTZEL_DETECTION_THRESHOLD) {
         ESP_LOGI(TAG, "Detection at frequency %d Hz (magnitude %.2f, log magnitude %.2f)", target_freq, magnitude, logMagnitude);
-        // need the function here that will "enable" the speech of the clock to "speak".
+        menu_updateMenu(menu_getLcdInfo(), (void*) "IETS");
+    } else
+    {
+        menu_updateMenu(menu_getLcdInfo(), (void*) "NIKS");
     }
 }
 
 void tone_detection_task(void *p)
 {
     isRunning = 1;
-    audio_pipeline_handle_t pipeline;
 
+    audio_pipeline_handle_t pipeline;
     audio_element_handle_t i2s_stream_reader;
     audio_element_handle_t resample_filter;
     audio_element_handle_t raw_reader;
@@ -115,7 +120,7 @@ void tone_detection_task(void *p)
     ESP_LOGI(TAG, "Number of Goertzel detection filters is %d", GOERTZEL_NR_FREQS);
 
     ESP_LOGI(TAG, "Create raw sample buffer");
-    int16_t *raw_buffer = (int16_t *) malloc((GOERTZEL_BUFFER_LENGTH * sizeof(int16_t)));
+    int16_t * raw_buffer = (int16_t *) malloc((GOERTZEL_BUFFER_LENGTH * sizeof(int16_t)));
     if (raw_buffer == NULL) {
         ESP_LOGE(TAG, "Memory allocation for raw sample buffer failed");
         return ESP_FAIL;
@@ -162,6 +167,7 @@ void tone_detection_task(void *p)
                 detect_freq(filters_cfg[f].target_freq, magnitude);
             }
         }
+        vTaskDelay(50 / portTICK_RATE_MS);
     }
 
     // Clean up (if we somehow leave the while loop, that is...)
@@ -187,22 +193,7 @@ void tone_detection_task(void *p)
 
 void goertzel_start(void)
 {
-    // esp_log_level_set("*", ESP_LOG_WARN);
-    // esp_log_level_set(TAG, ESP_LOG_INFO);
-
-    // static int isInit = 0;
-    // if (!isInit)
-    // {
-    //     // Setup audio codec
-    //     ESP_LOGI(TAG, "Setup codec chip");
-    //     // audio_board_handle_t board_handle = audio_board_init();
-    //     // audio_hal_ctrl_codec(board_handle->audio_hal, AUDIO_HAL_CODEC_MODE_BOTH, AUDIO_HAL_CTRL_START);
-    //     isInit = 1;
-    // }
-
-    // Perform tone detection task
     xTaskCreate(&tone_detection_task, "tone_detection_task", 1024 * 3, NULL, 10, NULL);
-    // tone_detection_task();
 }
 
 void goertzel_stop()

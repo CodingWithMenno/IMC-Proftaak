@@ -15,8 +15,11 @@
 #define ECHO_MENU_ID 1
 #define RADIO_MENU_ID 2
 #define CLOCK_MENU_ID 3
+#define SPEECH_MENU_ID 4
 
 #define INVALID 99
+
+static i2c_lcd1602_info_t *tmp_lcd_info;
 
 //Static functions
 static void doFancyAnimation(i2c_lcd1602_info_t*);
@@ -37,7 +40,9 @@ int menu_updateMenu(i2c_lcd1602_info_t *lcd_info, void *p)
     if (lcdMenus[currentLcdMenu].update == NULL)
         return LCD_MENU_ERROR;
     
-    lcdMenus[currentLcdMenu].update(p);
+    if (p != NULL)
+        lcdMenus[currentLcdMenu].update(p);
+
     return refreshMenu(lcd_info, currentLcdMenu, currentMenuItem);
 }
 
@@ -142,6 +147,8 @@ static int refreshMenu(i2c_lcd1602_info_t *lcd_info, unsigned int menuToDisplay,
 
 int menu_initMenus(i2c_lcd1602_info_t *lcd_info)
 {
+    tmp_lcd_info = lcd_info;
+
     //Hides the cursor
     i2c_lcd1602_set_cursor(lcd_info, false);
 
@@ -211,18 +218,24 @@ int menu_initMenus(i2c_lcd1602_info_t *lcd_info)
     LCD_MENU_ITEM *itemsEchoMenu = lcdMenus[ECHO_MENU_ID].items;
     //Record item
     itemsEchoMenu[0].id = 0;
-    strcpy(itemsEchoMenu[0].text, "RECORD");
+    strcpy(itemsEchoMenu[0].text, "REC");
     itemsEchoMenu[0].xCoord = 2;
     itemsEchoMenu[0].yCoord = 2;
     itemsEchoMenu[0].onClick = NULL;
     //Clips item
     itemsEchoMenu[1].id = 1;
     strcpy(itemsEchoMenu[1].text, "CLIPS");
-    itemsEchoMenu[1].xCoord = 13;
+    itemsEchoMenu[1].xCoord = 7;
     itemsEchoMenu[1].yCoord = 2;
     itemsEchoMenu[1].onClick = NULL;
+    //Speech item
+    itemsEchoMenu[2].id = 2;
+    strcpy(itemsEchoMenu[2].text, "SPEECH");
+    itemsEchoMenu[2].xCoord = 14;
+    itemsEchoMenu[2].yCoord = 2;
+    itemsEchoMenu[2].onClick = &onClickEchoSpeech;
     //Fill-up item
-    itemsEchoMenu[2].id = INVALID;
+    itemsEchoMenu[3].id = INVALID;
 
 
     //Radio menu
@@ -289,9 +302,39 @@ int menu_initMenus(i2c_lcd1602_info_t *lcd_info)
     strcpy(itemsClockMenu[0].text, "tijd");
     itemsClockMenu[0].xCoord = 8;
     itemsClockMenu[0].yCoord = 2;
-    itemsClockMenu[0].onClick = &onClickClockItem;
+    itemsClockMenu[0].onClick = NULL;
     //Fill-up item
     itemsClockMenu[1].id = INVALID;
+
+
+    //Speech recognition menu
+    lcdMenus[SPEECH_MENU_ID].id = SPEECH_MENU_ID;
+    strcpy(lcdMenus[SPEECH_MENU_ID].text, "SPRAAK");
+    lcdMenus[SPEECH_MENU_ID].xCoord = 7;
+    lcdMenus[SPEECH_MENU_ID].parent = ECHO_MENU_ID;
+    lcdMenus[SPEECH_MENU_ID].menuEnter = &onEnterSpeech;
+    lcdMenus[SPEECH_MENU_ID].update = &onUpdateSpeech;
+    lcdMenus[SPEECH_MENU_ID].menuExit = &onExitSpeech;
+    lcdMenus[SPEECH_MENU_ID].items = (LCD_MENU_ITEM*) malloc(sizeof(LCD_MENU_ITEM) * MAX_ITEMS_ON_MENU);
+    if (lcdMenus[SPEECH_MENU_ID].items == NULL)
+    {
+        free(lcdMenus);
+        free(lcdMenus[MAIN_MENU_ID].items);
+        free(lcdMenus[ECHO_MENU_ID].items);
+        free(lcdMenus[RADIO_MENU_ID].items);
+        free(lcdMenus[CLOCK_MENU_ID].items);
+        return LCD_MENU_ERROR;
+    }
+    
+    LCD_MENU_ITEM *itemsSpeechMenu = lcdMenus[SPEECH_MENU_ID].items;
+    //Recognition item
+    itemsSpeechMenu[0].id = 0;
+    strcpy(itemsSpeechMenu[0].text, "NULL");
+    itemsSpeechMenu[0].xCoord = 8;
+    itemsSpeechMenu[0].yCoord = 2;
+    itemsSpeechMenu[0].onClick = NULL;
+    //Fill-up item
+    itemsSpeechMenu[1].id = INVALID;
 
 
     //Display the main menu
@@ -330,6 +373,11 @@ static void doFancyAnimation(i2c_lcd1602_info_t* lcd_info)
     }
     i2c_lcd1602_set_left_to_right(lcd_info);
     vTaskDelay(100 / portTICK_RATE_MS);
+}
+
+i2c_lcd1602_info_t* menu_getLcdInfo()
+{
+    return tmp_lcd_info;
 }
 
 #endif
