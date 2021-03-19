@@ -25,6 +25,12 @@ void onClickMainClock(i2c_lcd1602_info_t* lcd_info)
     displayMenu(lcd_info, CLOCK_MENU_ID);
 }
 
+//Echo menu
+void onClickEchoSpeech(i2c_lcd1602_info_t* lcd_info)
+{
+    displayMenu(lcd_info, SPEECH_MENU_ID);
+}
+
 
 //Radio menu
 void onEnterRadio()
@@ -70,4 +76,15 @@ void onExitClock()
 void onUpdateClock(void *p)
 {
     strcpy(lcdMenus[CLOCK_MENU_ID].items[0].text, (char*) p);
+}
+
+//Speech menu
+void onEnterSpeech()
+{
+    goertzel_start();
+}
+
+void onExitSpeech()
+{
+    goertzel_stop();
 }

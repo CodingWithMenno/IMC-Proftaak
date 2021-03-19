@@ -15,6 +15,7 @@
 #define ECHO_MENU_ID 1
 #define RADIO_MENU_ID 2
 #define CLOCK_MENU_ID 3
+#define SPEECH_MENU_ID 4
 
 #define INVALID 99
 
@@ -211,18 +212,24 @@ int menu_initMenus(i2c_lcd1602_info_t *lcd_info)
     LCD_MENU_ITEM *itemsEchoMenu = lcdMenus[ECHO_MENU_ID].items;
     //Record item
     itemsEchoMenu[0].id = 0;
-    strcpy(itemsEchoMenu[0].text, "RECORD");
+    strcpy(itemsEchoMenu[0].text, "REC");
     itemsEchoMenu[0].xCoord = 2;
     itemsEchoMenu[0].yCoord = 2;
     itemsEchoMenu[0].onClick = NULL;
     //Clips item
     itemsEchoMenu[1].id = 1;
     strcpy(itemsEchoMenu[1].text, "CLIPS");
-    itemsEchoMenu[1].xCoord = 13;
+    itemsEchoMenu[1].xCoord = 7;
     itemsEchoMenu[1].yCoord = 2;
     itemsEchoMenu[1].onClick = NULL;
+    //Speech item
+    itemsEchoMenu[2].id = 2;
+    strcpy(itemsEchoMenu[2].text, "SPEECH");
+    itemsEchoMenu[2].xCoord = 14;
+    itemsEchoMenu[2].yCoord = 2;
+    itemsEchoMenu[2].onClick = &onClickEchoSpeech;
     //Fill-up item
-    itemsEchoMenu[2].id = INVALID;
+    itemsEchoMenu[3].id = INVALID;
 
 
     //Radio menu
@@ -292,6 +299,29 @@ int menu_initMenus(i2c_lcd1602_info_t *lcd_info)
     itemsClockMenu[0].onClick = NULL;
     //Fill-up item
     itemsClockMenu[1].id = INVALID;
+
+
+    //Speech recognition menu
+    lcdMenus[SPEECH_MENU_ID].id = SPEECH_MENU_ID;
+    strcpy(lcdMenus[SPEECH_MENU_ID].text, "SPRAAK");
+    lcdMenus[SPEECH_MENU_ID].xCoord = 7;
+    lcdMenus[SPEECH_MENU_ID].parent = ECHO_MENU_ID;
+    lcdMenus[SPEECH_MENU_ID].menuEnter = &onEnterSpeech;
+    lcdMenus[SPEECH_MENU_ID].menuExit = &onExitSpeech;
+    lcdMenus[SPEECH_MENU_ID].items = (LCD_MENU_ITEM*) malloc(sizeof(LCD_MENU_ITEM) * MAX_ITEMS_ON_MENU);
+    if (lcdMenus[SPEECH_MENU_ID].items == NULL)
+    {
+        free(lcdMenus);
+        free(lcdMenus[MAIN_MENU_ID].items);
+        free(lcdMenus[ECHO_MENU_ID].items);
+        free(lcdMenus[RADIO_MENU_ID].items);
+        free(lcdMenus[CLOCK_MENU_ID].items);
+        return LCD_MENU_ERROR;
+    }
+    
+    LCD_MENU_ITEM *itemsSpeechMenu = lcdMenus[SPEECH_MENU_ID].items;
+    //Fill-up item
+    itemsSpeechMenu[0].id = INVALID;
 
 
     //Display the main menu
