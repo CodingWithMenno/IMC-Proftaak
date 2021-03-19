@@ -14,5 +14,6 @@ void onClickRadioSky();
 void onEnterClock();
 void onUpdateClock(void*);
 void onExitClock();
+void onClickClockItem();
 
 #endif

@@ -154,16 +154,17 @@ void app_main()
     // wait(10000);
     // radio_switch("SKY");
 
-    // mp3_load("/sdcard/test.mp3");
+    // mp3_play("/sdcard/test.mp3");
     // wait(1000);
     // wait(1000);
     // wait(1000);
-    // mp3_load("/sdcard/test.mp3");
+    // mp3_play("/sdcard/test.mp3");
 
     while(1)
     {
         // mp3_update();
-        wait(10);
+        // mp3_addToQueue("/sdcard/test.mp3");
+        wait(5000);
     }
 
     // radio_stop();

@@ -36,7 +36,6 @@ void onExitRadio()
 {
     printf("Exited the radio menu\n");
     radio_quit();
-    // radio_reset();
 }
 
 void onClickRadio538()
@@ -58,16 +57,23 @@ void onClickRadioSky()
 void onEnterClock()
 {
     printf("Entered the clock menu\n");
-    mp3_load("/sdcard/test.mp3");
+    xTaskCreate(&mp3_task, "radio_task", 1024 * 3, NULL, 8, NULL);
 }
 
 void onExitClock()
 {
     printf("Exited the clock menu\n");
-    mp3_stop();
+    mp3_stopTask();
 }
 
 void onUpdateClock(void *p)
 {
     strcpy(lcdMenus[CLOCK_MENU_ID].items[0].text, (char*) p);
+}
+
+void onClickClockItem()
+{
+    mp3_addToQueue("/sdcard/test1.mp3");
+    mp3_addToQueue("/sdcard/test2.mp3");
+    mp3_addToQueue("/sdcard/test1.mp3");
 }
