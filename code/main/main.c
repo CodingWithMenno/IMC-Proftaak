@@ -78,7 +78,7 @@ void i2c_init()
     uint8_t address = CONFIG_LCD1602_I2C_ADDRESS;
     
 
-    // Set up the SMBus
+    // // Set up the SMBus
     smbus_info_t *smbus_info = smbus_malloc();
     smbus_init(smbus_info, i2c_num, address);
     smbus_set_timeout(smbus_info, 1000 / portTICK_RATE_MS);
@@ -91,24 +91,24 @@ void i2c_init()
     i2c_lcd1602_write_string(lcd_info, "Starting...");
 
     //Rotary init
-    // qwiic_twist_t *qwiic_info = (qwiic_twist_t*)malloc(sizeof(qwiic_twist_t));
+    qwiic_twist_t *qwiic_info = (qwiic_twist_t*)malloc(sizeof(qwiic_twist_t));
 
-    // qwiic_info->smbus_info = smbus_info;
-    // qwiic_info->i2c_addr = QWIIC_TWIST_ADDRESS;
-    // qwiic_info->port = i2c_num;
-    // qwiic_info->xMutex = xSemaphoreCreateMutex();
-    // qwiic_info->task_enabled = true;
-    // qwiic_info->task_time = 0;
-    // qwiic_info->onButtonPressed = &onEncoderPressed;
-    // qwiic_info->onButtonClicked = &onEncoderClicked;
-    // qwiic_info->onMoved = &onEncoderMoved;
+    qwiic_info->smbus_info = smbus_info;
+    qwiic_info->i2c_addr = QWIIC_TWIST_ADDRESS;
+    qwiic_info->port = i2c_num;
+    qwiic_info->xMutex = xSemaphoreCreateMutex();
+    qwiic_info->task_enabled = true;
+    qwiic_info->task_time = 0;
+    qwiic_info->onButtonPressed = &onEncoderPressed;
+    qwiic_info->onButtonClicked = &onEncoderClicked;
+    qwiic_info->onMoved = &onEncoderMoved;
     
-    // qwiic_twist_init(qwiic_info);
+    qwiic_twist_init(qwiic_info);
     menu_initMenus(lcd_info);
 
     goertzel_start();
 
-    // qwiic_twist_start_task(qwiic_info);
+    qwiic_twist_start_task(qwiic_info);
 }
 
 static void onEncoderPressed()
