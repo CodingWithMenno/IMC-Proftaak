@@ -106,8 +106,6 @@ void i2c_init()
     qwiic_twist_init(qwiic_info);
     menu_initMenus(lcd_info);
 
-    goertzel_start();
-
     qwiic_twist_start_task(qwiic_info);
 }
 

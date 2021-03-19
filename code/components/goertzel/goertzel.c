@@ -39,6 +39,8 @@ static const char *TAG = "GOERTZEL-EXAMPLE";
 
 #define AUDIO_SAMPLE_RATE 48000         // Audio capture sample rate [Hz]
 
+static int isRunning = 0;
+
 static const int GOERTZEL_DETECT_FREQS[] = {
     589
 };
@@ -98,8 +100,9 @@ static void detect_freq(int target_freq, float magnitude)
     }
 }
 
-esp_err_t tone_detection_task(void)
+void tone_detection_task(void *p)
 {
+    isRunning = 1;
     audio_pipeline_handle_t pipeline;
 
     audio_element_handle_t i2s_stream_reader;
@@ -147,7 +150,7 @@ esp_err_t tone_detection_task(void)
     ESP_LOGI(TAG, "Start pipeline");
     audio_pipeline_run(pipeline);
 
-    while (1) {
+    while (isRunning) {
         raw_stream_read(raw_reader, (char *) raw_buffer, GOERTZEL_BUFFER_LENGTH * sizeof(int16_t));
         for (int f = 0; f < GOERTZEL_NR_FREQS; f++) {
             float magnitude;
@@ -178,19 +181,31 @@ esp_err_t tone_detection_task(void)
     audio_element_deinit(i2s_stream_reader);
     audio_element_deinit(resample_filter);
     audio_element_deinit(raw_reader);
+
+    vTaskDelete(NULL);
 }
 
 void goertzel_start(void)
 {
-    esp_log_level_set("*", ESP_LOG_WARN);
-    esp_log_level_set(TAG, ESP_LOG_INFO);
+    // esp_log_level_set("*", ESP_LOG_WARN);
+    // esp_log_level_set(TAG, ESP_LOG_INFO);
 
-    // Setup audio codec
-    ESP_LOGI(TAG, "Setup codec chip");
-    audio_board_handle_t board_handle = audio_board_init();
-    audio_hal_ctrl_codec(board_handle->audio_hal, AUDIO_HAL_CODEC_MODE_BOTH, AUDIO_HAL_CTRL_START);
+    // static int isInit = 0;
+    // if (!isInit)
+    // {
+    //     // Setup audio codec
+    //     ESP_LOGI(TAG, "Setup codec chip");
+    //     // audio_board_handle_t board_handle = audio_board_init();
+    //     // audio_hal_ctrl_codec(board_handle->audio_hal, AUDIO_HAL_CODEC_MODE_BOTH, AUDIO_HAL_CTRL_START);
+    //     isInit = 1;
+    // }
 
     // Perform tone detection task
-    tone_detection_task();
+    xTaskCreate(&tone_detection_task, "tone_detection_task", 1024 * 3, NULL, 10, NULL);
+    // tone_detection_task();
 }
 
+void goertzel_stop()
+{
+    isRunning = 0;
+}

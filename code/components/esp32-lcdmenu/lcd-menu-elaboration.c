@@ -1,6 +1,7 @@
 #include "lcd-menu.c"
 #include "radioController.h"
 #include "sdcard-mp3.h"
+#include "goertzel.h"
 
 /*
 This file is to work out the onClicks, onExit, onEnter and update functions of the lcd-menu's. 
@@ -56,13 +57,15 @@ void onClickRadioSky()
 void onEnterClock()
 {
     printf("Entered the radio menu\n");
-    mp3_load("/sdcard/test.mp3");
+    // mp3_load("/sdcard/test.mp3");
+    goertzel_start();
 }
 
 void onExitClock()
 {
     printf("Exited the radio menu\n");
-    mp3_stop();
+    // mp3_stop();
+    goertzel_stop();
 }
 
 void onUpdateClock(void *p)
