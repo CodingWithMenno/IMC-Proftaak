@@ -10,6 +10,8 @@
 #include "sdkconfig.h"
 #include "esp32/rom/uart.h"
 
+#include "mcp23x17.h"
+
 #include "smbus.h"
 #include "i2c-lcd1602.h"
 #include "lcd-menu.h"
