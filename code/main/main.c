@@ -16,7 +16,7 @@
 #include "qwiic_twist.h"
 #include "sdcard-mp3.h"
 #include "radioController.h"
-
+#include "goertzel.h"
 
 #define TAG "app"
 
@@ -83,7 +83,7 @@ void i2cInit()
     uint8_t address = CONFIG_LCD1602_I2C_ADDRESS;
     
 
-    // Set up the SMBus
+    // // Set up the SMBus
     smbus_info_t *smbus_info = smbus_malloc();
     smbus_init(smbus_info, i2c_num, address);
     smbus_set_timeout(smbus_info, 1000 / portTICK_RATE_MS);
@@ -110,6 +110,7 @@ void i2cInit()
     
     qwiic_twist_init(qwiic_info);
     menu_initMenus(lcd_info);
+
     qwiic_twist_start_task(qwiic_info);
 }
 

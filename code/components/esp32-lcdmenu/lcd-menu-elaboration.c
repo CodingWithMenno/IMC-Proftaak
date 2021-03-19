@@ -1,6 +1,7 @@
 #include "lcd-menu.c"
 #include "radioController.h"
 #include "sdcard-mp3.h"
+#include "goertzel.h"
 
 /*
 This file is to work out the onClicks, onExit, onEnter and update functions of the lcd-menu's. 
@@ -29,13 +30,12 @@ void onClickMainClock(i2c_lcd1602_info_t* lcd_info)
 void onEnterRadio()
 {
     printf("Entered the radio menu\n");
-    xTaskCreate(&radio_task, "radio_task", 1024 * 3, NULL, 8, NULL);
 }
 
 void onExitRadio()
 {
     printf("Exited the radio menu\n");
-    radio_quit();
+    radio_reset();
 }
 
 void onClickRadio538()
@@ -56,24 +56,19 @@ void onClickRadioSky()
 //Klok menu
 void onEnterClock()
 {
-    printf("Entered the clock menu\n");
-    xTaskCreate(&mp3_task, "radio_task", 1024 * 3, NULL, 8, NULL);
+    printf("Entered the radio menu\n");
+    // mp3_load("/sdcard/test.mp3");
+    goertzel_start();
 }
 
 void onExitClock()
 {
-    printf("Exited the clock menu\n");
-    mp3_stopTask();
+    printf("Exited the radio menu\n");
+    // mp3_stop();
+    goertzel_stop();
 }
 
 void onUpdateClock(void *p)
 {
     strcpy(lcdMenus[CLOCK_MENU_ID].items[0].text, (char*) p);
-}
-
-void onClickClockItem()
-{
-    mp3_addToQueue("/sdcard/test1.mp3");
-    mp3_addToQueue("/sdcard/test2.mp3");
-    mp3_addToQueue("/sdcard/test1.mp3");
 }
