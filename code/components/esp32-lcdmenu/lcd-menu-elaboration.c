@@ -1,7 +1,8 @@
 #include "lcd-menu.c"
 #include "radioController.h"
 #include "sdcard-mp3.h"
-#include "talking_clock.c"
+#include "talking_clock.h"
+#include <sys/time.h>
 
 // Clock timer
 TimerHandle_t timer_1_sec;
@@ -56,7 +57,7 @@ void onClickRadioQ()
 void onClickRadioSky()
 {
     radio_switch(lcdMenus[RADIO_MENU_ID].items[2].text);
-}
+} 
 
 //Klok menu
 void onEnterClock()
@@ -64,11 +65,14 @@ void onEnterClock()
     printf("Entered the clock menu\n");
     xTaskCreate(&mp3_task, "radio_task", 1024 * 3, NULL, 8, NULL);
 
-    timer_1_sec = xTimerCreate("MyTimer", pdMS_TO_TICKS(1000), pdTRUE, (void *)1, &timer_1_sec_callback);
-    if (xTimerStart(timer_1_sec, 10) != pdPASS)
-    {
-        ESP_LOGE(TAG, "Cannot start 1 second timer");
-    }
+    vTaskDelay(2000/portTICK_RATE_MS);
+
+    talking_clock_fill_queue();
+    // timer_1_sec = xTimerCreate("MyTimer", pdMS_TO_TICKS(1000), pdTRUE, (void *)1, &timer_1_sec_callback);
+    // if (xTimerStart(timer_1_sec, 10) != pdPASS)
+    // {
+    //     printf("Cannot start 1 second timer");
+    // }
 }
 
 void onExitClock()
@@ -92,15 +96,16 @@ void onClickClockItem()
 void timer_1_sec_callback(TimerHandle_t xTimer)
 {
     // Print current time to the screen
-    time_t now;
-    struct tm timeinfo;
-    time(&now);
+    // time_t now;
+    // struct tm timeinfo;
+    // time(&now);
 
-    char strftime_buf[20];
-    localtime_r(&now, &timeinfo);
-    sprintf(&strftime_buf[0], "%02d:%02d:%02d", timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
+    // char strftime_buf[20];
+    // localtime_r(&now, &timeinfo);
+    // sprintf(&strftime_buf[0], "%02d:%02d:%02d", timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
 
-    onUpdateClock("test");
+    // men((char*)"test");
+    printf("test voor print");
     // size_t timeSize = strlen(strftime_buf);
     // if (menu_getCurrentMenuID() == 0)
     // {
@@ -112,8 +117,8 @@ void timer_1_sec_callback(TimerHandle_t xTimer)
     // }
 
     // Say the time every hour
-    if (timeinfo.tm_sec == 0 && timeinfo.tm_min % 10 == 0)
-    {
-        talking_clock_fill_queue();
-    }
+    // if (timeinfo.tm_sec == 0 && timeinfo.tm_min % 10 == 0)
+    // {
+    //     talking_clock_fill_queue();
+    // }
 }

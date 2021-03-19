@@ -34,7 +34,6 @@ extern "C" {
 #define TALKING_CLOCK_30_INDEX 18
 #define TALKING_CLOCK_40_INDEX 19
 #define TALKING_CLOCK_50_INDEX 20
-
 static char talking_clock_files[TALKING_CLOCK_ITEMS][TALKING_CLOCK_MAX_STRING] = {
 	"/sdcard/clock/itsnow.mp3",
 	"/sdcard/clock/hour.mp3",

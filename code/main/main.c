@@ -98,21 +98,21 @@ void i2cInit()
     i2c_lcd1602_write_string(lcd_info, "Starting...");
 
     //Rotary init
-    qwiic_twist_t *qwiic_info = (qwiic_twist_t*)malloc(sizeof(qwiic_twist_t));
+    // qwiic_twist_t *qwiic_info = (qwiic_twist_t*)malloc(sizeof(qwiic_twist_t));
 
-    qwiic_info->smbus_info = smbus_info;
-    qwiic_info->i2c_addr = QWIIC_TWIST_ADDRESS;
-    qwiic_info->port = i2c_num;
-    qwiic_info->xMutex = xSemaphoreCreateMutex();
-    qwiic_info->task_enabled = true;
-    qwiic_info->task_time = 0;
-    qwiic_info->onButtonPressed = &onEncoderPressed;
-    qwiic_info->onButtonClicked = &onEncoderClicked;
-    qwiic_info->onMoved = &onEncoderMoved;
+    // qwiic_info->smbus_info = smbus_info;
+    // qwiic_info->i2c_addr = QWIIC_TWIST_ADDRESS;
+    // qwiic_info->port = i2c_num;
+    // qwiic_info->xMutex = xSemaphoreCreateMutex();
+    // qwiic_info->task_enabled = true;
+    // qwiic_info->task_time = 0;
+    // qwiic_info->onButtonPressed = &onEncoderPressed;
+    // qwiic_info->onButtonClicked = &onEncoderClicked;
+    // qwiic_info->onMoved = &onEncoderMoved;
     
-    qwiic_twist_init(qwiic_info);
+    // qwiic_twist_init(qwiic_info);
     menu_initMenus(lcd_info);
-    qwiic_twist_start_task(qwiic_info);
+    // qwiic_twist_start_task(qwiic_info);
 }
 
 static void onEncoderPressed()
@@ -173,16 +173,35 @@ void app_main()
     // wait(10000);
     // radio_switch("SKY");
 
-    // mp3_play("/sdcard/test.mp3");
+    // mp3_play("/sdcard/clock/1.mp3");
     // wait(1000);
     // wait(1000);
     // wait(1000);
     // mp3_play("/sdcard/test.mp3");
 
+    menu_goToNextItem(lcd_info);
+    wait(500);
+    menu_onClick(lcd_info);
+    wait(500);
+
+    // mp3_addToQueue("/sdcard/clock/itsnow.mp3");
+    // wait(100);
+    // mp3_addToQueue("/sdcard/clock/1.mp3");
+    // wait(100);
+    // mp3_addToQueue("/sdcard/clock/hour.mp3");
+    // wait(100);
+    // mp3_addToQueue("/sdcard/clock/5.mp3");
+    // wait(100);
+    // mp3_addToQueue("/sdcard/clock/en.mp3");
+    // wait(100);
+    // mp3_addToQueue("/sdcard/clock/40.mp3");
+
+
+
     while(1)
     {
         // mp3_update();
-        // mp3_addToQueue("/sdcard/test.mp3");
+        //mp3_addToQueue("/sdcard/test.mp3");
         wait(5000);
     }
 

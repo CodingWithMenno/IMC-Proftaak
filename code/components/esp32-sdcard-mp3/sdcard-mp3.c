@@ -133,6 +133,7 @@ static void update()
     /* Stop when the last pipeline element (i2s_stream_writer in this case) receives stop event */
     if ((int)msg.data == AEL_STATUS_STATE_FINISHED) 
     {
+        vTaskDelay(500/portTICK_RATE_MS);
         ESP_LOGW(TAG, "[ * ] Stop event received");
         reset();
     }
