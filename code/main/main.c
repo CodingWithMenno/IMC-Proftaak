@@ -16,6 +16,7 @@
 #include "qwiic_twist.h"
 #include "sdcard-mp3.h"
 #include "radioController.h"
+#include "sntp_sync.h"
 
 
 #define TAG "app"
@@ -41,6 +42,7 @@ static i2c_lcd1602_info_t *lcd_info;
 static void onEncoderClicked();
 static void onEncoderPressed();
 static void onEncoderMoved(int16_t);
+void stmp_timesync_event(struct timeval *tv);
 
 //boolean to check if you went back a menu
 static bool wentBack = false;
@@ -145,9 +147,26 @@ static void onEncoderMoved(int16_t diff)
     }
 }
 
+void stmp_timesync_event(struct timeval *tv)
+{
+    ESP_LOGI(TAG, "Notification of a time synchronization event");
+
+    time_t now;
+    struct tm timeinfo;
+    time(&now);
+
+    char strftime_buf[64];
+    localtime_r(&now, &timeinfo);
+    strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
+    ESP_LOGI(TAG, "The current date/time in Amsterdam is: %s", strftime_buf);
+}
+
 void app_main()
 {
     i2cInit();
+
+    // sntp_sync(stmp_timesync_event);
+
     // radioInit();
 
     // radio_switch("538");

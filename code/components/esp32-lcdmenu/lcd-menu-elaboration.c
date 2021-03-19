@@ -1,6 +1,11 @@
 #include "lcd-menu.c"
 #include "radioController.h"
 #include "sdcard-mp3.h"
+#include "talking_clock.c"
+
+// Clock timer
+TimerHandle_t timer_1_sec;
+void timer_1_sec_callback(TimerHandle_t xTimer);
 
 /*
 This file is to work out the onClicks, onExit, onEnter and update functions of the lcd-menu's. 
@@ -58,6 +63,12 @@ void onEnterClock()
 {
     printf("Entered the clock menu\n");
     xTaskCreate(&mp3_task, "radio_task", 1024 * 3, NULL, 8, NULL);
+
+    timer_1_sec = xTimerCreate("MyTimer", pdMS_TO_TICKS(1000), pdTRUE, (void *)1, &timer_1_sec_callback);
+    if (xTimerStart(timer_1_sec, 10) != pdPASS)
+    {
+        ESP_LOGE(TAG, "Cannot start 1 second timer");
+    }
 }
 
 void onExitClock()
@@ -76,4 +87,33 @@ void onClickClockItem()
     mp3_addToQueue("/sdcard/test1.mp3");
     mp3_addToQueue("/sdcard/test2.mp3");
     mp3_addToQueue("/sdcard/test1.mp3");
+}
+
+void timer_1_sec_callback(TimerHandle_t xTimer)
+{
+    // Print current time to the screen
+    time_t now;
+    struct tm timeinfo;
+    time(&now);
+
+    char strftime_buf[20];
+    localtime_r(&now, &timeinfo);
+    sprintf(&strftime_buf[0], "%02d:%02d:%02d", timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
+
+    onUpdateClock("test");
+    // size_t timeSize = strlen(strftime_buf);
+    // if (menu_getCurrentMenuID() == 0)
+    // {
+    //     i2c_lcd1602_move_cursor(lcd_info, 6, 1);
+    //     for (int i = 0; i < timeSize; i++)
+    //     {
+    //         i2c_lcd1602_write_char(lcd_info, strftime_buf[i]);
+    //     }
+    // }
+
+    // Say the time every hour
+    if (timeinfo.tm_sec == 0 && timeinfo.tm_min % 10 == 0)
+    {
+        talking_clock_fill_queue();
+    }
 }
