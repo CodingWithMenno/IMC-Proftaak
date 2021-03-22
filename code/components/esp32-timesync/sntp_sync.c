@@ -24,8 +24,8 @@ static void timesync_obtainTime(void);
 static void timesync_initializeSntp(void);
 
 
-void timesync_sntpSync(sntp_sync_time_cb_t callback) {
-	
+void timesync_sntpSync(sntp_sync_time_cb_t callback) 
+{	
 	// Set callback for when time synchronisation is done
 	sntp_set_time_sync_notification_cb(callback);
 	// Set timezone to Amsterdam Time and print local time
@@ -39,7 +39,8 @@ void timesync_sntpSync(sntp_sync_time_cb_t callback) {
 	
 	
     // Is time set? If not, tm_year will be (1970 - 1900).
-    if (timeinfo.tm_year < (2016 - 1900)) {
+    if (timeinfo.tm_year < (2016 - 1900)) 
+    {
         ESP_LOGI(TAG, "Time is not set yet. Connecting to WiFi and getting time over NTP.");
         timesync_obtainTime();
         // update 'now' variable with current time
@@ -50,16 +51,18 @@ void timesync_sntpSync(sntp_sync_time_cb_t callback) {
 
 
 // Obtain SNTP time
-static void timesync_obtainTime(void){
+static void timesync_obtainTime(void)
+{
     timesync_initializeSntp();
 
     // wait for time to be set
     time_t now = 0;
     struct tm timeinfo = { 0 };
     int retry = 0;
-    const int retry_count = 10;
-    while (sntp_get_sync_status() == SNTP_SYNC_STATUS_RESET && ++retry < retry_count) {
-        ESP_LOGI(TAG, "Waiting for system time to be set... (%d/%d)", retry, retry_count);
+    const int retryCount = 10;
+    while (sntp_get_sync_status() == SNTP_SYNC_STATUS_RESET && ++retry < retryCount) 
+    {
+        ESP_LOGI(TAG, "Waiting for system time to be set... (%d/%d)", retry, retryCount);
         vTaskDelay(2000 / portTICK_PERIOD_MS);
     }
     time(&now);
@@ -68,8 +71,8 @@ static void timesync_obtainTime(void){
 }
 
 // Set synchronisation settings
-static void timesync_initializeSntp(void) {
-	
+static void timesync_initializeSntp(void) 
+{
     ESP_LOGI(TAG, "Initializing SNTP");
     sntp_setoperatingmode(SNTP_OPMODE_POLL);
     sntp_setservername(0, "0.nl.pool.ntp.org");
