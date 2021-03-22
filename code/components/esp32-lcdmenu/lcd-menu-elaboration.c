@@ -7,7 +7,7 @@
 
 // Clock timer
 TimerHandle_t timer_1_sec;
-void timer_1_sec_callback(TimerHandle_t xTimer);
+void time1SecCallback(TimerHandle_t xTimer);
 
 /*
 This file is to work out the onClicks, onExit, onEnter and update functions of the lcd-menu's. 
@@ -74,12 +74,12 @@ void onEnterClock()
 
     vTaskDelay(2000/portTICK_RATE_MS);
 
-    talking_clock_fill_queue();
-    timer_1_sec = xTimerCreate("MyTimer", pdMS_TO_TICKS(1000), pdTRUE, (void *)1, &timer_1_sec_callback);
-    // if (xTimerStart(timer_1_sec, 10) != pdPASS)
-    // {
-    //     printf("Cannot start 1 second timer");
-    // }
+    talkingClock_fillQueue();
+    timer_1_sec = xTimerCreate("MyTimer", pdMS_TO_TICKS(1000), pdTRUE, (void *)1, &time1SecCallback);
+    if (xTimerStart(timer_1_sec, 10) != pdPASS)
+    {
+        printf("Cannot start 1 second timer");
+    }
 }
 
 void onExitClock()
@@ -91,6 +91,11 @@ void onExitClock()
 void onUpdateClock(void *p)
 {
     strcpy(lcdMenus[CLOCK_MENU_ID].items[0].text, (char*) p);
+}
+
+void onClickClock()
+{
+    talkingClock_fillQueue();
 }
 
 //Speech menu
@@ -109,32 +114,23 @@ void onExitSpeech()
     goertzel_stop();
 }
 
-void timer_1_sec_callback(TimerHandle_t xTimer)
+void time1SecCallback(TimerHandle_t xTimer)
 {
     // Print current time to the screen
-    // time_t now;
-    // struct tm timeinfo;
-    // time(&now);
+    time_t now;
+    struct tm timeinfo;
+    time(&now);
 
-    // char strftime_buf[20];
-    // localtime_r(&now, &timeinfo);
-    // sprintf(&strftime_buf[0], "%02d:%02d:%02d", timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
+    char strftime_buf[20];
+    localtime_r(&now, &timeinfo);
+    sprintf(&strftime_buf[0], "%02d:%02d:%02d", timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
 
-    // men((char*)"test");
-    printf("test voor print");
-    // size_t timeSize = strlen(strftime_buf);
-    // if (menu_getCurrentMenuID() == 0)
-    // {
-    //     i2c_lcd1602_move_cursor(lcd_info, 6, 1);
-    //     for (int i = 0; i < timeSize; i++)
-    //     {
-    //         i2c_lcd1602_write_char(lcd_info, strftime_buf[i]);
-    //     }
-    // }
+    menu_updateMenu(menu_getLcdInfo(), (void*) strftime_buf);
+    size_t timeSize = strlen(strftime_buf);
 
     // Say the time every hour
     // if (timeinfo.tm_sec == 0 && timeinfo.tm_min % 10 == 0)
     // {
-    //     talking_clock_fill_queue();
+    //     talkingClock_fillQueue();
     // }
 }

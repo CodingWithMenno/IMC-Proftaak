@@ -147,7 +147,7 @@ static void update()
     }
 }
 
-static void init()
+void init()
 {
     xSemaphoreTake(radioMutex, portMAX_DELAY);
 

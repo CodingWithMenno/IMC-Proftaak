@@ -20,15 +20,15 @@
 static const char *TAG = "SNTP";
 
 
-static void obtain_time(void);
-static void initialize_sntp(void);
+static void timesync_obtainTime(void);
+static void timesync_initializeSntp(void);
 
 
-void sntp_sync(sntp_sync_time_cb_t callback) {
+void timesync_sntpSync(sntp_sync_time_cb_t callback) {
 	
 	// Set callback for when time synchronisation is done
 	sntp_set_time_sync_notification_cb(callback);
-	// Set timezone to Asmterdam Time and print local time
+	// Set timezone to Amsterdam Time and print local time
     setenv("TZ", "CET-1CEST-2,M3.5.0/02:00:00,M10.5.0/03:00:00", 1);
     tzset();
 	
@@ -41,7 +41,7 @@ void sntp_sync(sntp_sync_time_cb_t callback) {
     // Is time set? If not, tm_year will be (1970 - 1900).
     if (timeinfo.tm_year < (2016 - 1900)) {
         ESP_LOGI(TAG, "Time is not set yet. Connecting to WiFi and getting time over NTP.");
-        obtain_time();
+        timesync_obtainTime();
         // update 'now' variable with current time
         time(&now);
     }
@@ -50,8 +50,8 @@ void sntp_sync(sntp_sync_time_cb_t callback) {
 
 
 // Obtain SNTP time
-static void obtain_time(void){
-    initialize_sntp();
+static void timesync_obtainTime(void){
+    timesync_initializeSntp();
 
     // wait for time to be set
     time_t now = 0;
@@ -68,11 +68,11 @@ static void obtain_time(void){
 }
 
 // Set synchronisation settings
-static void initialize_sntp(void) {
+static void timesync_initializeSntp(void) {
 	
     ESP_LOGI(TAG, "Initializing SNTP");
     sntp_setoperatingmode(SNTP_OPMODE_POLL);
-    sntp_setservername(0, "pool.ntp.org");
+    sntp_setservername(0, "0.nl.pool.ntp.org");
     
     sntp_init();
 }

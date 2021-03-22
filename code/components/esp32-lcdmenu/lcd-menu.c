@@ -300,9 +300,9 @@ int menu_initMenus(i2c_lcd1602_info_t *lcd_info)
     //Clock item
     itemsClockMenu[0].id = 0;
     // strcpy(itemsClockMenu[0].text, "tijd");
-    itemsClockMenu[0].xCoord = 8;
+    itemsClockMenu[0].xCoord = 6;
     itemsClockMenu[0].yCoord = 2;
-    itemsClockMenu[0].onClick = NULL;
+    itemsClockMenu[0].onClick = &onClickClock;
     //Fill-up item
     itemsClockMenu[1].id = INVALID;
 

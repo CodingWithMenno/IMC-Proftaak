@@ -19,6 +19,14 @@
 #include "sntp_sync.h"
 #include "goertzel.h"
 
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+#include <time.h>
+#include <string.h>
+
 #define TAG "app"
 
 // Undefine USE_STDIN if no stdin is available (e.g. no USB UART) - a fixed delay will occur instead of a wait for a keypress.
@@ -70,11 +78,6 @@ static void i2c_master_init(void)
 static void wait(unsigned int time)
 {
     vTaskDelay(time / portTICK_RATE_MS);
-}
-
-void radioInit()
-{
-    xTaskCreate(&radio_task, "radio_task", 1024 * 2, NULL, 8, NULL);
 }
 
 void i2cInit() 
@@ -154,20 +157,35 @@ void stmp_timesync_event(struct timeval *tv)
     time_t now;
     struct tm timeinfo;
     time(&now);
-
+    
     char strftime_buf[64];
     localtime_r(&now, &timeinfo);
     strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
     ESP_LOGI(TAG, "The current date/time in Amsterdam is: %s", strftime_buf);
+    printf(strftime_buf);
 }
 
 void app_main()
 {
     i2cInit();
 
-    // sntp_sync(stmp_timesync_event);
+    // Initialise wifi and setup the time
+    xTaskCreate(&radio_task, "radio_task", 1024 * 3, NULL, 8, NULL);
+    wait(500);
+    radio_quit();
+    timesync_sntpSync(stmp_timesync_event);
 
-    // radioInit();
+    wait(500);
+    menu_goToNextItem(lcd_info);
+    wait(500);
+    menu_onClick(lcd_info);
+    wait(500);
+    menu_goToParentMenu(lcd_info);
+    wait(500);
+    menu_goToNextItem(lcd_info);
+    wait(500);
+    menu_onClick(lcd_info);
+
 
     // radio_switch("538");
     // wait(10000);
@@ -178,11 +196,6 @@ void app_main()
     // wait(1000);
     // wait(1000);
     // mp3_play("/sdcard/test.mp3");
-    wait(500);
-    menu_goToNextItem(lcd_info);
-    wait(500);
-    menu_onClick(lcd_info);
-    wait(500);
 
     // char* hallo = "hallo";
     // menu_updateMenu(menu_getLcdInfo(), (void *) hallo);

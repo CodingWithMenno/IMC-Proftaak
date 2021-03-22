@@ -9,7 +9,7 @@ extern "C" {
 #endif
 
 
-void sntp_sync(sntp_sync_time_cb_t callback);
+void timesync_sntpSync(sntp_sync_time_cb_t callback);
 
 #ifdef __cplusplus
 }
