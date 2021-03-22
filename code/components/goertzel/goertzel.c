@@ -49,41 +49,40 @@ static const int GOERTZEL_DETECT_FREQS[] = {
 
 #define GOERTZEL_NR_FREQS ((sizeof GOERTZEL_DETECT_FREQS) / (sizeof GOERTZEL_DETECT_FREQS[0]))
 
-static audio_element_handle_t create_i2s_stream(int sample_rate, audio_stream_type_t type)
+static audio_element_handle_t createI2sStream(int sampleRate, audio_stream_type_t type)
 {
-    i2s_stream_cfg_t i2s_cfg = I2S_STREAM_CFG_DEFAULT();
-    i2s_cfg.type = type;
-    i2s_cfg.i2s_config.sample_rate = sample_rate;
-    audio_element_handle_t i2s_stream = i2s_stream_init(&i2s_cfg);
-    return i2s_stream;
+    i2s_stream_cfg_t i2sCfg = I2S_STREAM_CFG_DEFAULT();
+    i2sCfg.type = type;
+    i2sCfg.i2s_config.sample_rate = sampleRate;
+    audio_element_handle_t i2sStream = i2s_stream_init(&i2sCfg);
+    return i2sStream;
 }
 
-static audio_element_handle_t create_resample_filter(
-    int source_rate, int source_channels, int dest_rate, int dest_channels)
+static audio_element_handle_t createResampleFilter(int sourceRate, int sourceChannels, int destRate, int destChannels)
 {
-    rsp_filter_cfg_t rsp_cfg = DEFAULT_RESAMPLE_FILTER_CONFIG();
-    rsp_cfg.src_rate = source_rate;
-    rsp_cfg.src_ch = source_channels;
-    rsp_cfg.dest_rate = dest_rate;
-    rsp_cfg.dest_ch = dest_channels;
-    audio_element_handle_t filter = rsp_filter_init(&rsp_cfg);
+    rsp_filter_cfg_t rspCfg = DEFAULT_RESAMPLE_FILTER_CONFIG();
+    rspCfg.src_rate = sourceRate;
+    rspCfg.src_ch = sourceChannels;
+    rspCfg.dest_rate = destRate;
+    rspCfg.dest_ch = destChannels;
+    audio_element_handle_t filter = rsp_filter_init(&rspCfg);
     return filter;
 }
 
-static audio_element_handle_t create_raw_stream()
+static audio_element_handle_t createRawStream()
 {
-    raw_stream_cfg_t raw_cfg = {
+    raw_stream_cfg_t rawCfg = {
         .out_rb_size = 8 * 1024,
         .type = AUDIO_STREAM_READER,
     };
-    audio_element_handle_t raw_reader = raw_stream_init(&raw_cfg);
-    return raw_reader;
+    audio_element_handle_t rawReader = raw_stream_init(&rawCfg);
+    return rawReader;
 }
 
-static audio_pipeline_handle_t create_pipeline()
+static audio_pipeline_handle_t createPipeline()
 {
-    audio_pipeline_cfg_t pipeline_cfg = DEFAULT_AUDIO_PIPELINE_CONFIG();
-    audio_pipeline_handle_t pipeline = audio_pipeline_init(&pipeline_cfg);
+    audio_pipeline_cfg_t pipelineCfg = DEFAULT_AUDIO_PIPELINE_CONFIG();
+    audio_pipeline_handle_t pipeline = audio_pipeline_init(&pipelineCfg);
     return pipeline;
 }
 
@@ -92,12 +91,12 @@ static audio_pipeline_handle_t create_pipeline()
  * Goertzel filter calculated
  * Use a logarithm for the magnitude
  */
-static void detect_freq(int target_freq, float magnitude)
+static void detect_freq(int targetFreq, float magnitude)
 {
     float logMagnitude = 10.0f * log10f(magnitude);
 
     if (logMagnitude > GOERTZEL_DETECTION_THRESHOLD) {
-        ESP_LOGI(TAG, "Detection at frequency %d Hz (magnitude %.2f, log magnitude %.2f)", target_freq, magnitude, logMagnitude);
+        ESP_LOGI(TAG, "Detection at frequency %d Hz (magnitude %.2f, log magnitude %.2f)", targetFreq, magnitude, logMagnitude);
         menu_updateMenu(menu_getLcdInfo(), (void*) "IETS");
     } else
     {
@@ -105,23 +104,23 @@ static void detect_freq(int target_freq, float magnitude)
     }
 }
 
-void tone_detection_task(void *p)
+void toneDetectionTask(void *p)
 {
     isRunning = 1;
 
     audio_pipeline_handle_t pipeline;
-    audio_element_handle_t i2s_stream_reader;
-    audio_element_handle_t resample_filter;
-    audio_element_handle_t raw_reader;
+    audio_element_handle_t i2sStreamReader;
+    audio_element_handle_t resampleFilter;
+    audio_element_handle_t rawReader;
 
-    goertzel_filter_cfg_t filters_cfg[GOERTZEL_NR_FREQS];
-    goertzel_filter_data_t filters_data[GOERTZEL_NR_FREQS];
+    goertzel_filter_cfg_t filtersCfg[GOERTZEL_NR_FREQS];
+    goertzel_filter_data_t filtersData[GOERTZEL_NR_FREQS];
 
     ESP_LOGI(TAG, "Number of Goertzel detection filters is %d", GOERTZEL_NR_FREQS);
 
     ESP_LOGI(TAG, "Create raw sample buffer");
-    int16_t * raw_buffer = (int16_t *) malloc((GOERTZEL_BUFFER_LENGTH * sizeof(int16_t)));
-    if (raw_buffer == NULL) {
+    int16_t *rawBuffer = (int16_t *) malloc((GOERTZEL_BUFFER_LENGTH * sizeof(int16_t)));
+    if (rawBuffer == NULL) {
         ESP_LOGE(TAG, "Memory allocation for raw sample buffer failed");
         vTaskDelete(NULL);
         return;
@@ -129,43 +128,43 @@ void tone_detection_task(void *p)
 
     ESP_LOGI(TAG, "Setup Goertzel detection filters");
     for (int f = 0; f < GOERTZEL_NR_FREQS; f++) {
-        filters_cfg[f].sample_rate = GOERTZEL_SAMPLE_RATE_HZ;
-        filters_cfg[f].target_freq = GOERTZEL_DETECT_FREQS[f];
-        filters_cfg[f].buffer_length = GOERTZEL_BUFFER_LENGTH;
-        esp_err_t error = goertzel_filter_setup(&filters_data[f], &filters_cfg[f]);
+        filtersCfg[f].sample_rate = GOERTZEL_SAMPLE_RATE_HZ;
+        filtersCfg[f].target_freq = GOERTZEL_DETECT_FREQS[f];
+        filtersCfg[f].buffer_length = GOERTZEL_BUFFER_LENGTH;
+        esp_err_t error = goertzelFilter_setup(&filtersData[f], &filtersCfg[f]);
         ESP_ERROR_CHECK(error);
     }
 
     ESP_LOGI(TAG, "Create pipeline");
-    pipeline = create_pipeline();
+    pipeline = createPipeline();
 
     ESP_LOGI(TAG, "Create audio elements for pipeline");
-    i2s_stream_reader = create_i2s_stream(AUDIO_SAMPLE_RATE, AUDIO_STREAM_READER);
-    resample_filter = create_resample_filter(AUDIO_SAMPLE_RATE, 2, GOERTZEL_SAMPLE_RATE_HZ, 1);
-    raw_reader = create_raw_stream();
+    i2sStreamReader = createI2sStream(AUDIO_SAMPLE_RATE, AUDIO_STREAM_READER);
+    resampleFilter = createResampleFilter(AUDIO_SAMPLE_RATE, 2, GOERTZEL_SAMPLE_RATE_HZ, 1);
+    rawReader = createRawStream();
 
     ESP_LOGI(TAG, "Register audio elements to pipeline");
-    audio_pipeline_register(pipeline, i2s_stream_reader, "i2s");
-    audio_pipeline_register(pipeline, resample_filter, "rsp_filter");
-    audio_pipeline_register(pipeline, raw_reader, "raw");
+    audio_pipeline_register(pipeline, i2sStreamReader, "i2s");
+    audio_pipeline_register(pipeline, resampleFilter, "rsp_filter");
+    audio_pipeline_register(pipeline, rawReader, "raw");
 
     ESP_LOGI(TAG, "Link audio elements together to make pipeline ready");
-    const char *link_tag[3] = {"i2s", "rsp_filter", "raw"};
-    audio_pipeline_link(pipeline, &link_tag[0], 3);
+    const char *linkTag[3] = {"i2s", "rsp_filter", "raw"};
+    audio_pipeline_link(pipeline, &linkTag[0], 3);
 
     ESP_LOGI(TAG, "Start pipeline");
     audio_pipeline_run(pipeline);
 
     while (isRunning) {
-        raw_stream_read(raw_reader, (char *) raw_buffer, GOERTZEL_BUFFER_LENGTH * sizeof(int16_t));
+        raw_stream_read(rawReader, (char *) rawBuffer, GOERTZEL_BUFFER_LENGTH * sizeof(int16_t));
         for (int f = 0; f < GOERTZEL_NR_FREQS; f++) {
             float magnitude;
 
-            esp_err_t error = goertzel_filter_process(&filters_data[f], raw_buffer, GOERTZEL_BUFFER_LENGTH);
+            esp_err_t error = goertzelFilter_process(&filtersData[f], rawBuffer, GOERTZEL_BUFFER_LENGTH);
             ESP_ERROR_CHECK(error);
 
-            if (goertzel_filter_new_magnitude(&filters_data[f], &magnitude)) {
-                detect_freq(filters_cfg[f].target_freq, magnitude);
+            if (goertzelFilter_newMagnitude(&filtersData[f], &magnitude)) {
+                detect_freq(filtersCfg[f].target_freq, magnitude);
             }
         }
         vTaskDelay(50 / portTICK_RATE_MS);
@@ -173,28 +172,28 @@ void tone_detection_task(void *p)
 
     // Clean up (if we somehow leave the while loop, that is...)
     ESP_LOGI(TAG, "Deallocate raw sample buffer memory");
-    free(raw_buffer);
+    free(rawBuffer);
 
     audio_pipeline_stop(pipeline);
     audio_pipeline_wait_for_stop(pipeline);
     audio_pipeline_terminate(pipeline);
 
-    audio_pipeline_unregister(pipeline, i2s_stream_reader);
-    audio_pipeline_unregister(pipeline, resample_filter);
-    audio_pipeline_unregister(pipeline, raw_reader);
+    audio_pipeline_unregister(pipeline, i2sStreamReader);
+    audio_pipeline_unregister(pipeline, resampleFilter);
+    audio_pipeline_unregister(pipeline, rawReader);
 
     audio_pipeline_deinit(pipeline);
 
-    audio_element_deinit(i2s_stream_reader);
-    audio_element_deinit(resample_filter);
-    audio_element_deinit(raw_reader);
+    audio_element_deinit(i2sStreamReader);
+    audio_element_deinit(resampleFilter);
+    audio_element_deinit(rawReader);
 
     vTaskDelete(NULL);
 }
 
 void goertzel_start(void)
 {
-    xTaskCreate(&tone_detection_task, "tone_detection_task", 1024 * 3, NULL, 10, NULL);
+    xTaskCreate(&toneDetectionTask, "tone_detection_task", 1024 * 3, NULL, 10, NULL);
 }
 
 void goertzel_stop()

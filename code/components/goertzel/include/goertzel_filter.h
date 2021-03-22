@@ -43,9 +43,9 @@ typedef struct goertzel_filt_dat_t {
     bool updated;           // True whenever new magnitude is calculated
 } goertzel_filter_data_t;
 
-esp_err_t goertzel_filter_setup(goertzel_filter_data_t *data, goertzel_filter_cfg_t *config);
-esp_err_t goertzel_filter_clear(goertzel_filter_data_t *data);
-esp_err_t goertzel_filter_process(goertzel_filter_data_t *filter, int16_t *samples, int numSamples);
-bool goertzel_filter_new_magnitude(goertzel_filter_data_t *filter, float *magnitude);
+esp_err_t goertzelFilter_setup(goertzel_filter_data_t *data, goertzel_filter_cfg_t *config);
+esp_err_t goertzelFilter_clear(goertzel_filter_data_t *data);
+esp_err_t goertzelFilter_process(goertzel_filter_data_t *filter, int16_t *samples, int numSamples);
+bool goertzelFilter_newMagnitude(goertzel_filter_data_t *filter, float *magnitude);
 
 #endif
