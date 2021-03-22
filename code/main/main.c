@@ -17,6 +17,7 @@
 #include "sdcard-mp3.h"
 #include "radioController.h"
 #include "goertzel.h"
+#include "mcp23017.h"
 
 #define TAG "app"
 
@@ -112,6 +113,23 @@ void i2cInit()
     menu_initMenus(lcd_info);
 
     qwiic_twist_start_task(qwiic_info);
+
+    //GPIO expander init
+    mcp23017_t *mcp23017_info = (mcp23017_t*)malloc(sizeof(mcp23017_t));
+
+    mcp23017_info->smbus_info = smbus_info;
+    mcp23017_info->i2c_addr = MCP23017_ADDRES;
+    mcp23017_info->port = i2c_num;
+    mcp23017_info->xMutex = xSemaphoreCreateMutex();
+    mcp23017_info->task_enabled = true;
+    mcp23017_info->task_time = 0;
+    mcp23017_info->sda_gpio = 16;
+    mcp23017_info->scl_gpio = 17;
+
+    mcp23017_init(mcp23017_info);
+    mcp23017_set_mode(mcp23017_info, 0, MCP23017_GPIO_OUTPUT);
+    mcp23017_set_level(mcp23017_info, 1, true);
+    //mcp23017_start_task(mcp23017_info);
 }
 
 static void onEncoderPressed()

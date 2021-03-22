@@ -296,6 +296,5 @@ esp_err_t qwiic_twist_stop_task(qwiic_twist_t* config) {
 	
 	ESP_LOGI(TAG, "Stopping task");
 	return ESP_OK;
-	
 }
 
