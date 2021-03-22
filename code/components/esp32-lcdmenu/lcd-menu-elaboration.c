@@ -69,33 +69,32 @@ void onClickRadioSky()
 //Klok menu
 void onEnterClock()
 {
-    printf("Entered the radio menu\n");
+    printf("Entered the clock menu\n");
     xTaskCreate(&mp3_task, "radio_task", 1024 * 3, NULL, 8, NULL);
 
-    vTaskDelay(2000/portTICK_RATE_MS);
+    vTaskDelay(1000 / portTICK_RATE_MS);
 
     talkingClock_fillQueue();
-    timer_1_sec = xTimerCreate("MyTimer", pdMS_TO_TICKS(1000), pdTRUE, (void *)1, &time1SecCallback);
+
+    static int timeIsInit = 0;
+    if (timeIsInit)
+    return;
+    
+    timeIsInit = 1;
+    timer_1_sec = xTimerCreate("MyTimer", pdMS_TO_TICKS(1000), pdTRUE, (void *) 1, &time1SecCallback);
     if (xTimerStart(timer_1_sec, 10) != pdPASS)
-    {
-        printf("Cannot start 1 second timer");
-    }
+        printf("Cannot start 1 second timer\n");
 }
 
 void onExitClock()
 {
-    printf("Exited the radio menu\n");
+    printf("Exited the clock menu\n");
     mp3_stopTask();
 }
 
 void onUpdateClock(void *p)
 {
     strcpy(lcdMenus[CLOCK_MENU_ID].items[0].text, (char*) p);
-}
-
-void onClickClock()
-{
-    talkingClock_fillQueue();
 }
 
 //Speech menu
@@ -125,12 +124,6 @@ void time1SecCallback(TimerHandle_t xTimer)
     localtime_r(&now, &timeinfo);
     sprintf(&strftime_buf[0], "%02d:%02d:%02d", timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
 
-    menu_updateMenu(menu_getLcdInfo(), (void*) strftime_buf);
-    size_t timeSize = strlen(strftime_buf);
-
-    // Say the time every hour
-    // if (timeinfo.tm_sec == 0 && timeinfo.tm_min % 10 == 0)
-    // {
-    //     talkingClock_fillQueue();
-    // }
+    if (currentLcdMenu == CLOCK_MENU_ID)
+        menu_updateMenu(menu_getLcdInfo(), (void*) strftime_buf);
 }

@@ -107,9 +107,10 @@ static int displayMenu(i2c_lcd1602_info_t *lcd_info, unsigned int menuToDisplay)
     if (currentLcdMenu != INVALID && lcdMenus[currentLcdMenu].menuExit != NULL)
         lcdMenus[currentLcdMenu].menuExit();
 
-    doFancyAnimation(lcd_info);
     currentMenuItem = newMenu.items[0].id;
     currentLcdMenu = newMenu.id;
+
+    doFancyAnimation(lcd_info);
 
     //Perform the init function of the new menu
     if (newMenu.menuEnter != NULL)
@@ -302,7 +303,7 @@ int menu_initMenus(i2c_lcd1602_info_t *lcd_info)
     // strcpy(itemsClockMenu[0].text, "tijd");
     itemsClockMenu[0].xCoord = 6;
     itemsClockMenu[0].yCoord = 2;
-    itemsClockMenu[0].onClick = &onClickClock;
+    itemsClockMenu[0].onClick = NULL;
     //Fill-up item
     itemsClockMenu[1].id = INVALID;
 

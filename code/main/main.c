@@ -101,21 +101,21 @@ void i2cInit()
     i2c_lcd1602_write_string(lcd_info, "Starting...");
 
     //Rotary init
-    // qwiic_twist_t *qwiic_info = (qwiic_twist_t*)malloc(sizeof(qwiic_twist_t));
+    qwiic_twist_t *qwiic_info = (qwiic_twist_t*)malloc(sizeof(qwiic_twist_t));
 
-    // qwiic_info->smbus_info = smbus_info;
-    // qwiic_info->i2c_addr = QWIIC_TWIST_ADDRESS;
-    // qwiic_info->port = i2c_num;
-    // qwiic_info->xMutex = xSemaphoreCreateMutex();
-    // qwiic_info->task_enabled = true;
-    // qwiic_info->task_time = 0;
-    // qwiic_info->onButtonPressed = &onEncoderPressed;
-    // qwiic_info->onButtonClicked = &onEncoderClicked;
-    // qwiic_info->onMoved = &onEncoderMoved;
+    qwiic_info->smbus_info = smbus_info;
+    qwiic_info->i2c_addr = QWIIC_TWIST_ADDRESS;
+    qwiic_info->port = i2c_num;
+    qwiic_info->xMutex = xSemaphoreCreateMutex();
+    qwiic_info->task_enabled = true;
+    qwiic_info->task_time = 0;
+    qwiic_info->onButtonPressed = &onEncoderPressed;
+    qwiic_info->onButtonClicked = &onEncoderClicked;
+    qwiic_info->onMoved = &onEncoderMoved;
     
-    // qwiic_twist_init(qwiic_info);
+    qwiic_twist_init(qwiic_info);
     menu_initMenus(lcd_info);
-    // qwiic_twist_start_task(qwiic_info);
+    qwiic_twist_start_task(qwiic_info);
 }
 
 static void onEncoderPressed()
@@ -175,16 +175,16 @@ void app_main()
     radio_quit();
     timesync_sntpSync(stmp_timesync_event);
 
-    wait(500);
-    menu_goToNextItem(lcd_info);
-    wait(500);
-    menu_onClick(lcd_info);
-    wait(500);
-    menu_goToParentMenu(lcd_info);
-    wait(500);
-    menu_goToNextItem(lcd_info);
-    wait(500);
-    menu_onClick(lcd_info);
+    // wait(500);
+    // menu_goToNextItem(lcd_info);
+    // wait(500);
+    // menu_onClick(lcd_info);
+    // wait(500);
+    // menu_goToParentMenu(lcd_info);
+    // wait(500);
+    // menu_goToNextItem(lcd_info);
+    // wait(500);
+    // menu_onClick(lcd_info);
 
 
     // radio_switch("538");

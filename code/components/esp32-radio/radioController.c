@@ -120,14 +120,13 @@ static void update()
 {
     audio_event_iface_msg_t msg;
     esp_err_t ret = audio_event_iface_listen(evt, &msg, 200);
-    if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "[ * ] Event interface error : %d", ret);
+    if (ret != ESP_OK)
         return;
-    }
 
     if (msg.source_type == AUDIO_ELEMENT_TYPE_ELEMENT
         && msg.source == (void *) mp3_decoder
-        && msg.cmd == AEL_MSG_CMD_REPORT_MUSIC_INFO) {
+        && msg.cmd == AEL_MSG_CMD_REPORT_MUSIC_INFO) 
+    {
         audio_element_info_t music_info = {0};
         audio_element_getinfo(mp3_decoder, &music_info);
 

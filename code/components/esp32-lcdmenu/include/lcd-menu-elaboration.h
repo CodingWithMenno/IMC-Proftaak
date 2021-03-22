@@ -12,7 +12,6 @@ void onExitRadio();
 void onClickRadio538();
 void onClickRadioQ();
 void onClickRadioSky();
-void onClickClock();
 
 void onEnterClock();
 void onUpdateClock(void*);
