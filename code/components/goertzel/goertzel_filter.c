@@ -19,7 +19,7 @@
 /**
  * Setup the filter using the provided config data to prepare for processing
  */
-esp_err_t goertzel_filter_setup(goertzel_filter_data_t *data, goertzel_filter_cfg_t *config)
+esp_err_t goertzelFilter_setup(goertzel_filter_data_t *data, goertzel_filter_cfg_t *config)
 {
     // Calculate constants for the Goertzel filter
     float numSamples = (float) config->buffer_length;
@@ -30,13 +30,13 @@ esp_err_t goertzel_filter_setup(goertzel_filter_data_t *data, goertzel_filter_cf
     //data->omega = omega;
     data->coefficient = 2.0f * cosf(omega);
 
-    return goertzel_filter_clear(data);
+    return goertzelFilter_clear(data);
 }
 
 /**
  * Clear the filter data to prepare for processing of samples
  */
-esp_err_t goertzel_filter_clear(goertzel_filter_data_t *data)
+esp_err_t goertzelFilter_clear(goertzel_filter_data_t *data)
 {
     data->q0 = 0.0f;
     data->q1 = 0.0f;
@@ -48,7 +48,7 @@ esp_err_t goertzel_filter_clear(goertzel_filter_data_t *data)
     return ESP_OK;
 }
 
-esp_err_t goertzel_filter_process(goertzel_filter_data_t *filter, int16_t *samples, int numSamples)
+esp_err_t goertzelFilter_process(goertzel_filter_data_t *filter, int16_t *samples, int numSamples)
 {
     for (int s = 0; s < numSamples; s++) {
         // Process one sample
@@ -83,7 +83,7 @@ esp_err_t goertzel_filter_process(goertzel_filter_data_t *filter, int16_t *sampl
  * magnitude parameter accordingly,
  * or return false if no new magnitude is available
  */
-bool goertzel_filter_new_magnitude(goertzel_filter_data_t *filter, float *magnitude)
+bool goertzelFilter_newMagnitude(goertzel_filter_data_t *filter, float *magnitude)
 {
     if (filter->updated) {
         *magnitude = filter->magnitude;

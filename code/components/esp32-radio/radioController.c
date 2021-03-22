@@ -41,11 +41,16 @@
 
 #include "radioController.h"
 
+// Starts the pipelines, streams, etc.
 static void init();
+// Checks wheter the channel is corrupted and/or stopped
 static void update();
+// Stops the radio, closes all the pipelines, streams, etc.
 static void stop();
+// Stops the radio from playing (does not close pipelines, streams, etc.)
 static void reset();
-static int _http_stream_event_handle(http_stream_event_msg_t*);
+// Updates the http stream
+static int httpStreamEventHandle(http_stream_event_msg_t*);
 
 static const char *TAG = "HTTP_MP3_EXAMPLE";
 
@@ -53,10 +58,12 @@ static int running = 1;
 static int isInit = 0;
 static int isPlaying = 0;
 
+// Semaphore for the radio task
 SemaphoreHandle_t radioMutex;
 
+// Audio variables
 audio_pipeline_handle_t pipeline;
-audio_element_handle_t http_stream_reader, i2s_stream_writer, mp3_decoder;
+audio_element_handle_t httpStreamReader, i2sStreamWriter, mp3Decoder;
 audio_event_iface_handle_t evt;
 esp_periph_set_handle_t set;
 
@@ -78,9 +85,11 @@ void radio_switch(char channel[])
 
     if (strcmp(ip, " ") != 0)
     {
+        // Stop the current playing (if playing) and start the new one
+
         if (isPlaying)
             reset();
-        audio_element_set_uri(http_stream_reader, ip);
+        audio_element_set_uri(httpStreamReader, ip);
         audio_pipeline_run(pipeline);
         isPlaying = 1;
     }
@@ -126,16 +135,16 @@ static void update()
     }
 
     if (msg.source_type == AUDIO_ELEMENT_TYPE_ELEMENT
-        && msg.source == (void *) mp3_decoder
+        && msg.source == (void *) mp3Decoder
         && msg.cmd == AEL_MSG_CMD_REPORT_MUSIC_INFO) {
         audio_element_info_t music_info = {0};
-        audio_element_getinfo(mp3_decoder, &music_info);
+        audio_element_getinfo(mp3Decoder, &music_info);
 
         ESP_LOGI(TAG, "[ * ] Receive music info from mp3 decoder, sample_rates=%d, bits=%d, ch=%d",
                     music_info.sample_rates, music_info.bits, music_info.channels);
 
-        audio_element_setinfo(i2s_stream_writer, &music_info);
-        i2s_stream_set_clk(i2s_stream_writer, music_info.sample_rates, music_info.bits, music_info.channels);
+        audio_element_setinfo(i2sStreamWriter, &music_info);
+        i2s_stream_set_clk(i2sStreamWriter, music_info.sample_rates, music_info.bits, music_info.channels);
         return;
     }
 
@@ -170,62 +179,62 @@ static void init()
     esp_log_level_set(TAG, ESP_LOG_DEBUG);
 
     ESP_LOGI(TAG, "[2.0] Create audio pipeline for playback");
-    audio_pipeline_cfg_t pipeline_cfg = DEFAULT_AUDIO_PIPELINE_CONFIG();
-    pipeline = audio_pipeline_init(&pipeline_cfg);
+    audio_pipeline_cfg_t pipelineCfg = DEFAULT_AUDIO_PIPELINE_CONFIG();
+    pipeline = audio_pipeline_init(&pipelineCfg);
     mem_assert(pipeline);
 
     ESP_LOGI(TAG, "[2.1] Create http stream to read data");
-    http_stream_cfg_t http_cfg = HTTP_STREAM_CFG_DEFAULT();
-    http_cfg.event_handle = _http_stream_event_handle;
-    http_cfg.type = AUDIO_STREAM_READER;
-    http_cfg.enable_playlist_parser = true;
-    http_stream_reader = http_stream_init(&http_cfg);
+    http_stream_cfg_t httpCfg = HTTP_STREAM_CFG_DEFAULT();
+    httpCfg.event_handle = httpStreamEventHandle;
+    httpCfg.type = AUDIO_STREAM_READER;
+    httpCfg.enable_playlist_parser = true;
+    httpStreamReader = http_stream_init(&httpCfg);
 
     ESP_LOGI(TAG, "[2.2] Create i2s stream to write data to codec chip");
-    i2s_stream_cfg_t i2s_cfg = I2S_STREAM_CFG_DEFAULT();
-    i2s_cfg.type = AUDIO_STREAM_WRITER;
-    i2s_stream_writer = i2s_stream_init(&i2s_cfg);
+    i2s_stream_cfg_t i2sCfg = I2S_STREAM_CFG_DEFAULT();
+    i2sCfg.type = AUDIO_STREAM_WRITER;
+    i2sStreamWriter = i2s_stream_init(&i2sCfg);
 
     ESP_LOGI(TAG, "[2.3] Create mp3 decoder to decode mp3 file");
-    mp3_decoder_cfg_t mp3_cfg = DEFAULT_MP3_DECODER_CONFIG();
-    mp3_decoder = mp3_decoder_init(&mp3_cfg);
+    mp3_decoder_cfg_t mp3Cfg = DEFAULT_MP3_DECODER_CONFIG();
+    mp3Decoder = mp3_decoder_init(&mp3Cfg);
 
     ESP_LOGI(TAG, "[2.4] Register all elements to audio pipeline");
-    audio_pipeline_register(pipeline, http_stream_reader, "http");
-    audio_pipeline_register(pipeline, mp3_decoder,        "mp3");
-    audio_pipeline_register(pipeline, i2s_stream_writer,  "i2s");
+    audio_pipeline_register(pipeline, httpStreamReader, "http");
+    audio_pipeline_register(pipeline, mp3Decoder,        "mp3");
+    audio_pipeline_register(pipeline, i2sStreamWriter,  "i2s");
 
     ESP_LOGI(TAG, "[2.5] Link it together http_stream-->mp3_decoder-->i2s_stream-->[codec_chip]");
-    const char *link_tag[3] = {"http", "mp3", "i2s"};
-    audio_pipeline_link(pipeline, &link_tag[0], 3);
+    const char *linkTag[3] = {"http", "mp3", "i2s"};
+    audio_pipeline_link(pipeline, &linkTag[0], 3);
 
     ESP_LOGI(TAG, "[2.6] Set up  uri (http as http_stream, mp3 as mp3 decoder, and default output is i2s)");
-    audio_element_set_uri(http_stream_reader, "https://icecast-qmusicnl-cdp.triple-it.nl/Qmusic_nl_live_96.mp3");
+    audio_element_set_uri(httpStreamReader, "https://icecast-qmusicnl-cdp.triple-it.nl/Qmusic_nl_live_96.mp3");
     
     static int isWifiInit = 0;
     ESP_LOGI(TAG, "[ 3 ] Start and wait for Wi-Fi network");
-    static esp_periph_config_t periph_cfg = DEFAULT_ESP_PERIPH_SET_CONFIG();
-    set = esp_periph_set_init(&periph_cfg);
-    periph_wifi_cfg_t wifi_cfg = {
+    static esp_periph_config_t periphCfg = DEFAULT_ESP_PERIPH_SET_CONFIG();
+    set = esp_periph_set_init(&periphCfg);
+    periph_wifi_cfg_t wifiCfg = {
         .ssid = CONFIG_WIFI_SSID,
         .password = CONFIG_WIFI_PASSWORD,
     };
 
     ESP_LOGI(TAG, "[ 3.2 ] Start and wait for Wi-Fi network");
-    static esp_periph_handle_t wifi_handle;
-    wifi_handle = periph_wifi_init(&wifi_cfg);
+    static esp_periph_handle_t wifiHandle;
+    wifiHandle = periph_wifi_init(&wifiCfg);
     ESP_LOGI(TAG, "[ 3.3 ] Start and wait for Wi-Fi network");
     if (!isWifiInit)
     {
-        esp_periph_start(set, wifi_handle);
+        esp_periph_start(set, wifiHandle);
         ESP_LOGI(TAG, "[ 3.4 ] Start and wait for Wi-Fi network");
-        periph_wifi_wait_for_connected(wifi_handle, portMAX_DELAY);
+        periph_wifi_wait_for_connected(wifiHandle, portMAX_DELAY);
         isWifiInit = 1;
     }
 
     ESP_LOGI(TAG, "[ 4 ] Set up  event listener");
-    audio_event_iface_cfg_t evt_cfg = AUDIO_EVENT_IFACE_DEFAULT_CFG();
-    evt = audio_event_iface_init(&evt_cfg);
+    audio_event_iface_cfg_t evtCfg = AUDIO_EVENT_IFACE_DEFAULT_CFG();
+    evt = audio_event_iface_init(&evtCfg);
 
     ESP_LOGI(TAG, "[4.1] Listening event from all elements of pipeline");
     audio_pipeline_set_listener(pipeline, evt);
@@ -248,8 +257,8 @@ static void reset()
 {
     audio_pipeline_stop(pipeline);
     audio_pipeline_wait_for_stop(pipeline);
-    audio_element_reset_state(mp3_decoder);
-    audio_element_reset_state(i2s_stream_writer);
+    audio_element_reset_state(mp3Decoder);
+    audio_element_reset_state(i2sStreamWriter);
     audio_pipeline_reset_ringbuffer(pipeline);
     audio_pipeline_reset_items_state(pipeline);
     isPlaying = 0;
@@ -263,9 +272,9 @@ static void stop()
     audio_pipeline_terminate(pipeline);
 
     /* Terminate the pipeline before removing the listener */
-    audio_pipeline_unregister(pipeline, http_stream_reader);
-    audio_pipeline_unregister(pipeline, i2s_stream_writer);
-    audio_pipeline_unregister(pipeline, mp3_decoder);
+    audio_pipeline_unregister(pipeline, httpStreamReader);
+    audio_pipeline_unregister(pipeline, i2sStreamWriter);
+    audio_pipeline_unregister(pipeline, mp3Decoder);
 
     audio_pipeline_remove_listener(pipeline);
 
@@ -278,10 +287,9 @@ static void stop()
 
     /* Release all resources */
     audio_pipeline_deinit(pipeline);
-    audio_element_deinit(http_stream_reader);
-    audio_element_deinit(i2s_stream_writer);
-    audio_element_deinit(mp3_decoder);
-    // esp_periph_set_destroy(set);
+    audio_element_deinit(httpStreamReader);
+    audio_element_deinit(i2sStreamWriter);
+    audio_element_deinit(mp3Decoder);
 
     isPlaying = 0;
     isInit = 0;
@@ -289,7 +297,7 @@ static void stop()
     vTaskDelete(NULL);
 }
 
-static int _http_stream_event_handle(http_stream_event_msg_t *msg)
+static int httpStreamEventHandle(http_stream_event_msg_t *msg)
 {
     if (msg->event_id == HTTP_STREAM_RESOLVE_ALL_TRACKS) 
         return ESP_OK;
