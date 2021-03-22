@@ -123,7 +123,8 @@ void tone_detection_task(void *p)
     int16_t * raw_buffer = (int16_t *) malloc((GOERTZEL_BUFFER_LENGTH * sizeof(int16_t)));
     if (raw_buffer == NULL) {
         ESP_LOGE(TAG, "Memory allocation for raw sample buffer failed");
-        return ESP_FAIL;
+        vTaskDelete(NULL);
+        return;
     }
 
     ESP_LOGI(TAG, "Setup Goertzel detection filters");

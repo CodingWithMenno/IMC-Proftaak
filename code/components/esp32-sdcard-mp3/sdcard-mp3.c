@@ -20,18 +20,24 @@
 
 static const char *TAG = "SDCARD_MP3_EXAMPLE";
 
+// Initialise the mp3 player (creates pipelines, streams, etc.)
 static void init();
+// Checks if the current playing .mp3 file is corrupted and/or finished
 static void update();
+// Stops the audio from playing and resets all the pipelines and streams
 static void reset();
 
+// Semaphore for the queue's and mp3 task
 SemaphoreHandle_t mp3Mutex;
+// The queue with all the filepaths to the .mp3 files
 Queue *playlist;
 static int isRunning = 0;
 static int isPlaying = 0;
 static int isInit = 0;
 
+// Audio variables
 audio_pipeline_handle_t pipeline;
-audio_element_handle_t fatfs_stream_reader, i2s_stream_writer, mp3_decoder;
+audio_element_handle_t fatfsStreamReader, i2sStreamWriter, mp3Decoder;
 audio_event_iface_handle_t evt;
 esp_periph_set_handle_t set;
 
@@ -46,16 +52,20 @@ void mp3_task(void *p)
     {
         xSemaphoreTake(mp3Mutex, portMAX_DELAY);
 
+        // Check if there is nothing playing and the queue is not empty
         if (!isPlaying && playlist != NULL)
         {
+            // Remove the first in the queue and get the .mp3 filepath
             char *audioFile = front(&playlist);
             if (audioFile != NULL)
             {
+                // Play the .mp3 file
                 mp3_play(audioFile);
             }
             
         }
 
+        // Check wether song is finished
         update();
 
         xSemaphoreGive(mp3Mutex);
@@ -92,7 +102,7 @@ void mp3_play(char* fileName)
     if (isRunning)
     {
         reset();
-        audio_element_set_uri(fatfs_stream_reader, fileName);
+        audio_element_set_uri(fatfsStreamReader, fileName);
     } else
     {
         init(fileName);
@@ -116,16 +126,16 @@ static void update()
     }
 
     if (msg.source_type == AUDIO_ELEMENT_TYPE_ELEMENT
-        && msg.source == (void *) mp3_decoder
+        && msg.source == (void *) mp3Decoder
         && msg.cmd == AEL_MSG_CMD_REPORT_MUSIC_INFO) {
         audio_element_info_t music_info = {0};
-        audio_element_getinfo(mp3_decoder, &music_info);
+        audio_element_getinfo(mp3Decoder, &music_info);
 
         ESP_LOGI(TAG, "[ * ] Receive music info from mp3 decoder, sample_rates=%d, bits=%d, ch=%d",
                     music_info.sample_rates, music_info.bits, music_info.channels);
 
-        audio_element_setinfo(i2s_stream_writer, &music_info);
-        i2s_stream_set_clk(i2s_stream_writer, music_info.sample_rates, music_info.bits, music_info.channels);
+        audio_element_setinfo(i2sStreamWriter, &music_info);
+        i2s_stream_set_clk(i2sStreamWriter, music_info.sample_rates, music_info.bits, music_info.channels);
         return;
     }
 
@@ -144,8 +154,8 @@ static void reset()
 
     audio_pipeline_stop(pipeline);
     audio_pipeline_wait_for_stop(pipeline);
-    audio_element_reset_state(mp3_decoder);
-    audio_element_reset_state(i2s_stream_writer);
+    audio_element_reset_state(mp3Decoder);
+    audio_element_reset_state(i2sStreamWriter);
     audio_pipeline_reset_ringbuffer(pipeline);
     audio_pipeline_reset_items_state(pipeline);
     isPlaying = 0;
@@ -159,6 +169,7 @@ static void init(char *fileName)
     esp_log_level_set("*", ESP_LOG_WARN);
     esp_log_level_set(TAG, ESP_LOG_INFO);
 
+    // This only needs to happen the first time this function is called
     if (!isInit)
     {
         ESP_LOGI(TAG, "[ 1 ] Mount sdcard");
@@ -178,31 +189,31 @@ static void init(char *fileName)
     ESP_LOGI(TAG, "[3.1] Create fatfs stream to read data from sdcard");
     fatfs_stream_cfg_t fatfs_cfg = FATFS_STREAM_CFG_DEFAULT();
     fatfs_cfg.type = AUDIO_STREAM_READER;
-    fatfs_stream_reader = fatfs_stream_init(&fatfs_cfg);
+    fatfsStreamReader = fatfs_stream_init(&fatfs_cfg);
 
     ESP_LOGI(TAG, "[3.2] Create i2s stream to write data to codec chip");
     i2s_stream_cfg_t i2s_cfg = I2S_STREAM_CFG_DEFAULT();
     i2s_cfg.type = AUDIO_STREAM_WRITER;
-    i2s_stream_writer = i2s_stream_init(&i2s_cfg);
+    i2sStreamWriter = i2s_stream_init(&i2s_cfg);
 
     ESP_LOGI(TAG, "[3.3] Create mp3 decoder to decode mp3 file");
     mp3_decoder_cfg_t mp3_cfg = DEFAULT_MP3_DECODER_CONFIG();
-    mp3_decoder = mp3_decoder_init(&mp3_cfg);
+    mp3Decoder = mp3_decoder_init(&mp3_cfg);
 
     ESP_LOGI(TAG, "[3.4] Register all elements to audio pipeline");
-    audio_pipeline_register(pipeline, fatfs_stream_reader, "file");
-    audio_pipeline_register(pipeline, mp3_decoder, "mp3");
-    audio_pipeline_register(pipeline, i2s_stream_writer, "i2s");
+    audio_pipeline_register(pipeline, fatfsStreamReader, "file");
+    audio_pipeline_register(pipeline, mp3Decoder, "mp3");
+    audio_pipeline_register(pipeline, i2sStreamWriter, "i2s");
 
     ESP_LOGI(TAG, "[3.5] Link it together [sdcard]-->fatfs_stream-->mp3_decoder-->i2s_stream-->[codec_chip]");
     audio_pipeline_link(pipeline, (const char *[]) {"file", "mp3", "i2s"}, 3);
 
     ESP_LOGI(TAG, "[3.6] Set up  uri (file as fatfs_stream, mp3 as mp3 decoder, and default output is i2s)");
-    audio_element_set_uri(fatfs_stream_reader, fileName);
+    audio_element_set_uri(fatfsStreamReader, fileName);
 
     ESP_LOGI(TAG, "[ 4 ] Set up  event listener");
-    audio_event_iface_cfg_t evt_cfg = AUDIO_EVENT_IFACE_DEFAULT_CFG();
-    evt = audio_event_iface_init(&evt_cfg);
+    audio_event_iface_cfg_t evtCfg = AUDIO_EVENT_IFACE_DEFAULT_CFG();
+    evt = audio_event_iface_init(&evtCfg);
 
     ESP_LOGI(TAG, "[4.1] Listening event from all elements of pipeline");
     audio_pipeline_set_listener(pipeline, evt);
@@ -222,9 +233,9 @@ void mp3_stop()
     audio_pipeline_stop(pipeline);
     audio_pipeline_terminate(pipeline);
 
-    audio_pipeline_unregister(pipeline, fatfs_stream_reader);
-    audio_pipeline_unregister(pipeline, i2s_stream_writer);
-    audio_pipeline_unregister(pipeline, mp3_decoder);
+    audio_pipeline_unregister(pipeline, fatfsStreamReader);
+    audio_pipeline_unregister(pipeline, i2sStreamWriter);
+    audio_pipeline_unregister(pipeline, mp3Decoder);
 
     /* Terminal the pipeline before removing the listener */
     audio_pipeline_remove_listener(pipeline);
@@ -238,9 +249,9 @@ void mp3_stop()
 
     /* Release all resources */
     audio_pipeline_deinit(pipeline);
-    audio_element_deinit(fatfs_stream_reader);
-    audio_element_deinit(i2s_stream_writer);
-    audio_element_deinit(mp3_decoder);
+    audio_element_deinit(fatfsStreamReader);
+    audio_element_deinit(i2sStreamWriter);
+    audio_element_deinit(mp3Decoder);
     // esp_periph_set_destroy(set);
 
     isPlaying = 0;
