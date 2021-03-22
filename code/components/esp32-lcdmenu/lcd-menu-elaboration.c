@@ -3,6 +3,7 @@
 #include "sdcard-mp3.h"
 #include "talking_clock.h"
 #include <sys/time.h>
+#include "goertzel.h"
 
 // Clock timer
 TimerHandle_t timer_1_sec;
@@ -28,6 +29,12 @@ void onClickMainRadio(i2c_lcd1602_info_t* lcd_info)
 void onClickMainClock(i2c_lcd1602_info_t* lcd_info)
 {
     displayMenu(lcd_info, CLOCK_MENU_ID);
+}
+
+//Echo menu
+void onClickEchoSpeech(i2c_lcd1602_info_t* lcd_info)
+{
+    displayMenu(lcd_info, SPEECH_MENU_ID);
 }
 
 
@@ -62,7 +69,7 @@ void onClickRadioSky()
 //Klok menu
 void onEnterClock()
 {
-    printf("Entered the clock menu\n");
+    printf("Entered the radio menu\n");
     xTaskCreate(&mp3_task, "radio_task", 1024 * 3, NULL, 8, NULL);
 
     vTaskDelay(2000/portTICK_RATE_MS);
@@ -77,7 +84,7 @@ void onEnterClock()
 
 void onExitClock()
 {
-    printf("Exited the clock menu\n");
+    printf("Exited the radio menu\n");
     mp3_stopTask();
 }
 
@@ -86,11 +93,20 @@ void onUpdateClock(void *p)
     strcpy(lcdMenus[CLOCK_MENU_ID].items[0].text, (char*) p);
 }
 
-void onClickClockItem()
+//Speech menu
+void onEnterSpeech()
 {
-    mp3_addToQueue("/sdcard/test1.mp3");
-    mp3_addToQueue("/sdcard/test2.mp3");
-    mp3_addToQueue("/sdcard/test1.mp3");
+    goertzel_start();
+}
+
+void onUpdateSpeech(void *p)
+{
+    strcpy(lcdMenus[SPEECH_MENU_ID].items[0].text, (char*) p);
+}
+
+void onExitSpeech()
+{
+    goertzel_stop();
 }
 
 void timer_1_sec_callback(TimerHandle_t xTimer)

@@ -38,9 +38,8 @@ esp_periph_set_handle_t set;
 void mp3_task(void *p)
 {
     init("/sdcard/test.mp3");
-    
-    playlist = NULL;
     mp3Mutex = xSemaphoreCreateMutex();
+    playlist = NULL;
 
     isRunning = 1;
     while (isRunning)
