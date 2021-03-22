@@ -41,68 +41,125 @@
 
 #include "radioController.h"
 
-void radio_start(void*);
+// Checks wheter the channel is corrupted and/or stopped
+static void update();
+// Stops the radio from playing (does not close pipelines, streams, etc.)
+static void reset();
+// Updates the http stream
+static int httpStreamEventHandle(http_stream_event_msg_t*);
 
 static const char *TAG = "HTTP_MP3_EXAMPLE";
 
+static int running = 0;
 static int isInit = 0;
 static int isPlaying = 0;
+
+// Semaphore for the radio task
+SemaphoreHandle_t radioMutex;
+
+// Audio variables
 audio_pipeline_handle_t pipeline;
-audio_element_handle_t http_stream_reader, i2s_stream_writer, mp3_decoder;
+audio_element_handle_t httpStreamReader, i2sStreamWriter, mp3Decoder;
 audio_event_iface_handle_t evt;
 esp_periph_set_handle_t set;
 
-int _http_stream_event_handle(http_stream_event_msg_t *msg)
-{
-    if (msg->event_id == HTTP_STREAM_RESOLVE_ALL_TRACKS) {
-        return ESP_OK;
-    }
-
-    if (msg->event_id == HTTP_STREAM_FINISH_TRACK) {
-        return http_stream_next_track(msg->el);
-    }
-    if (msg->event_id == HTTP_STREAM_FINISH_PLAYLIST) {
-        return http_stream_fetch_again(msg->el);
-    }
-    return ESP_OK;
-}
-
 void radio_switch(char channel[])
 {    
-    char* Ip;
+    if (!isInit)
+        return;
+
+    char* ip = " ";
+
+    xSemaphoreTake(radioMutex, portMAX_DELAY);
 
     if (strcmp(channel, "538") == 0)
-    {
-        Ip = "https://21253.live.streamtheworld.com/RADIO538.mp3";
-        radio_start((void*) Ip);
-    }
+        ip = "https://21253.live.streamtheworld.com/RADIO538.mp3";
     else if(strcmp(channel, "Qmusic") == 0)
-    {
-        Ip = "https://icecast-qmusicnl-cdp.triple-it.nl/Qmusic_nl_live_96.mp3";
-        radio_start((void*) Ip);
-    }
+        ip = "https://icecast-qmusicnl-cdp.triple-it.nl/Qmusic_nl_live_96.mp3";
     else if (strcmp(channel, "SKY") == 0)
-    {
-        Ip = "https://19993.live.streamtheworld.com/SKYRADIO.mp3";
-        radio_start((void*) Ip);
-    } 
-}
+        ip = "https://19993.live.streamtheworld.com/SKYRADIO.mp3";
 
-void radio_start(void *ip)
-{
-    char *Ip = (char*) ip;
-
-    if (isInit)
+    if (strcmp(ip, " ") != 0)
     {
-        audio_element_set_uri(http_stream_reader, ip);
-        radio_reset(Ip);
+        // Stop the current playing (if playing) and start the new one
+
+        if (isPlaying)
+            reset();
+        audio_element_set_uri(httpStreamReader, ip);
         audio_pipeline_run(pipeline);
         isPlaying = 1;
+    }
+
+    xSemaphoreGive(radioMutex);
+}
+
+void radio_task(void *p)
+{
+    radioMutex = xSemaphoreCreateMutex();
+    running = 1;
+    radio_init();
+
+    while (running)
+    {
+        if (isPlaying)
+        {
+            xSemaphoreTake(radioMutex, portMAX_DELAY);
+            update();
+            xSemaphoreGive(radioMutex);
+        }
+        
+        vTaskDelay(50 / portTICK_RATE_MS);
+    }
+    
+    radio_stop();
+    vTaskDelete(NULL);
+}
+
+void radio_quit()
+{
+    xSemaphoreTake(radioMutex, portMAX_DELAY);
+    running = 0;
+    xSemaphoreGive(radioMutex);
+}
+
+static void update()
+{
+    audio_event_iface_msg_t msg;
+    esp_err_t ret = audio_event_iface_listen(evt, &msg, 200);
+    if (ret != ESP_OK)
+        return;
+
+    if (msg.source_type == AUDIO_ELEMENT_TYPE_ELEMENT
+        && msg.source == (void *) mp3Decoder
+        && msg.cmd == AEL_MSG_CMD_REPORT_MUSIC_INFO) 
+    {
+        audio_element_info_t music_info = {0};
+        audio_element_getinfo(mp3Decoder, &music_info);
+
+        ESP_LOGI(TAG, "[ * ] Receive music info from mp3 decoder, sample_rates=%d, bits=%d, ch=%d",
+                    music_info.sample_rates, music_info.bits, music_info.channels);
+
+        audio_element_setinfo(i2sStreamWriter, &music_info);
+        i2s_stream_set_clk(i2sStreamWriter, music_info.sample_rates, music_info.bits, music_info.channels);
         return;
     }
 
+    /* Stop when the last pipeline element (i2s_stream_writer in this case) receives stop event */
+    if ((int)msg.data == AEL_STATUS_STATE_FINISHED) 
+    {
+        ESP_LOGW(TAG, "[ * ] Stop event received");
+        reset();
+    }
+}
+
+void radio_init()
+{
+    if (running)
+        xSemaphoreTake(radioMutex, portMAX_DELAY);
+
     esp_err_t err = nvs_flash_init();
-    if (err == ESP_ERR_NVS_NO_FREE_PAGES) {
+    if (err == ESP_ERR_NVS_NO_FREE_PAGES) 
+    {
         // NVS partition was truncated and needs to be erased
         // Retry nvs_flash_init
         ESP_ERROR_CHECK(nvs_flash_erase());
@@ -118,60 +175,63 @@ void radio_start(void *ip)
     esp_log_level_set("*", ESP_LOG_WARN);
     esp_log_level_set(TAG, ESP_LOG_DEBUG);
 
-    // ESP_LOGI(TAG, "[ 1 ] Start audio codec chip");
-    // audio_board_handle_t board_handle = audio_board_init();
-    // audio_hal_ctrl_codec(board_handle->audio_hal, AUDIO_HAL_CODEC_MODE_DECODE, AUDIO_HAL_CTRL_START);
-
     ESP_LOGI(TAG, "[2.0] Create audio pipeline for playback");
-    audio_pipeline_cfg_t pipeline_cfg = DEFAULT_AUDIO_PIPELINE_CONFIG();
-    pipeline = audio_pipeline_init(&pipeline_cfg);
+    audio_pipeline_cfg_t pipelineCfg = DEFAULT_AUDIO_PIPELINE_CONFIG();
+    pipeline = audio_pipeline_init(&pipelineCfg);
     mem_assert(pipeline);
 
     ESP_LOGI(TAG, "[2.1] Create http stream to read data");
-    http_stream_cfg_t http_cfg = HTTP_STREAM_CFG_DEFAULT();
-    http_cfg.event_handle = _http_stream_event_handle;
-    http_cfg.type = AUDIO_STREAM_READER;
-    http_cfg.enable_playlist_parser = true;
-    http_stream_reader = http_stream_init(&http_cfg);
+    http_stream_cfg_t httpCfg = HTTP_STREAM_CFG_DEFAULT();
+    httpCfg.event_handle = httpStreamEventHandle;
+    httpCfg.type = AUDIO_STREAM_READER;
+    httpCfg.enable_playlist_parser = true;
+    httpStreamReader = http_stream_init(&httpCfg);
 
     ESP_LOGI(TAG, "[2.2] Create i2s stream to write data to codec chip");
-    i2s_stream_cfg_t i2s_cfg = I2S_STREAM_CFG_DEFAULT();
-    i2s_cfg.type = AUDIO_STREAM_WRITER;
-    i2s_stream_writer = i2s_stream_init(&i2s_cfg);
+    i2s_stream_cfg_t i2sCfg = I2S_STREAM_CFG_DEFAULT();
+    i2sCfg.type = AUDIO_STREAM_WRITER;
+    i2sStreamWriter = i2s_stream_init(&i2sCfg);
 
     ESP_LOGI(TAG, "[2.3] Create mp3 decoder to decode mp3 file");
-    mp3_decoder_cfg_t mp3_cfg = DEFAULT_MP3_DECODER_CONFIG();
-    mp3_decoder = mp3_decoder_init(&mp3_cfg);
+    mp3_decoder_cfg_t mp3Cfg = DEFAULT_MP3_DECODER_CONFIG();
+    mp3Decoder = mp3_decoder_init(&mp3Cfg);
 
     ESP_LOGI(TAG, "[2.4] Register all elements to audio pipeline");
-    audio_pipeline_register(pipeline, http_stream_reader, "http");
-    audio_pipeline_register(pipeline, mp3_decoder,        "mp3");
-    audio_pipeline_register(pipeline, i2s_stream_writer,  "i2s");
+    audio_pipeline_register(pipeline, httpStreamReader, "http");
+    audio_pipeline_register(pipeline, mp3Decoder,        "mp3");
+    audio_pipeline_register(pipeline, i2sStreamWriter,  "i2s");
 
     ESP_LOGI(TAG, "[2.5] Link it together http_stream-->mp3_decoder-->i2s_stream-->[codec_chip]");
-    const char *link_tag[3] = {"http", "mp3", "i2s"};
-    audio_pipeline_link(pipeline, &link_tag[0], 3);
+    const char *linkTag[3] = {"http", "mp3", "i2s"};
+    audio_pipeline_link(pipeline, &linkTag[0], 3);
 
     ESP_LOGI(TAG, "[2.6] Set up  uri (http as http_stream, mp3 as mp3 decoder, and default output is i2s)");
-    audio_element_set_uri(http_stream_reader, Ip);
-
+    audio_element_set_uri(httpStreamReader, "https://icecast-qmusicnl-cdp.triple-it.nl/Qmusic_nl_live_96.mp3");
+    
+    static int isWifiInit = 0;
     ESP_LOGI(TAG, "[ 3 ] Start and wait for Wi-Fi network");
-    esp_periph_config_t periph_cfg = DEFAULT_ESP_PERIPH_SET_CONFIG();
-    set = esp_periph_set_init(&periph_cfg);
-    periph_wifi_cfg_t wifi_cfg = {
+    static esp_periph_config_t periphCfg = DEFAULT_ESP_PERIPH_SET_CONFIG();
+    set = esp_periph_set_init(&periphCfg);
+    periph_wifi_cfg_t wifiCfg = {
         .ssid = CONFIG_WIFI_SSID,
         .password = CONFIG_WIFI_PASSWORD,
     };
-    
-    esp_periph_handle_t wifi_handle = periph_wifi_init(&wifi_cfg);
+
+    ESP_LOGI(TAG, "[ 3.2 ] Start and wait for Wi-Fi network");
+    static esp_periph_handle_t wifiHandle;
+    wifiHandle = periph_wifi_init(&wifiCfg);
     ESP_LOGI(TAG, "[ 3.3 ] Start and wait for Wi-Fi network");
-    esp_periph_start(set, wifi_handle);
-    ESP_LOGI(TAG, "[ 3.4 ] Start and wait for Wi-Fi network");
-    periph_wifi_wait_for_connected(wifi_handle, portMAX_DELAY);
+    if (!isWifiInit)
+    {
+        esp_periph_start(set, wifiHandle);
+        ESP_LOGI(TAG, "[ 3.4 ] Start and wait for Wi-Fi network");
+        periph_wifi_wait_for_connected(wifiHandle, portMAX_DELAY);
+        isWifiInit = 1;
+    }
 
     ESP_LOGI(TAG, "[ 4 ] Set up  event listener");
-    audio_event_iface_cfg_t evt_cfg = AUDIO_EVENT_IFACE_DEFAULT_CFG();
-    evt = audio_event_iface_init(&evt_cfg);
+    audio_event_iface_cfg_t evtCfg = AUDIO_EVENT_IFACE_DEFAULT_CFG();
+    evt = audio_event_iface_init(&evtCfg);
 
     ESP_LOGI(TAG, "[4.1] Listening event from all elements of pipeline");
     audio_pipeline_set_listener(pipeline, evt);
@@ -179,40 +239,28 @@ void radio_start(void *ip)
     ESP_LOGI(TAG, "[4.2] Listening event from peripherals");
     audio_event_iface_set_listener(esp_periph_set_get_event_iface(set), evt);
 
-    ESP_LOGI(TAG, "[ 5 ] Start audio_pipeline");
-    audio_pipeline_run(pipeline);
-
-    isPlaying = 1;
     isInit = 1;
-}
 
-void radio_update()
-{
-    if(!isPlaying)
-        return;
-
-    audio_event_iface_msg_t msg;
-    audio_event_iface_listen(evt, &msg, portMAX_DELAY);
-
-    /* Stop when the last pipeline element (i2s_stream_writer in this case) receives stop event */
-    if (msg.source_type == AUDIO_ELEMENT_TYPE_ELEMENT && msg.source == (void *) i2s_stream_writer
-        && msg.cmd == AEL_MSG_CMD_REPORT_STATUS
-        && (((int)msg.data == AEL_STATUS_STATE_STOPPED) || ((int)msg.data == AEL_STATUS_STATE_FINISHED))) 
-        {
-        ESP_LOGW(TAG, "[ * ] Stop event received");
-        radio_stop();
-    }
-
+    if (running)
+        xSemaphoreGive(radioMutex);
 }
 
 void radio_reset()
 {
+    xSemaphoreTake(radioMutex, portMAX_DELAY);
+    reset();
+    xSemaphoreGive(radioMutex);
+}
+
+static void reset()
+{
     audio_pipeline_stop(pipeline);
     audio_pipeline_wait_for_stop(pipeline);
-    audio_element_reset_state(mp3_decoder);
-    audio_element_reset_state(i2s_stream_writer);
+    audio_element_reset_state(mp3Decoder);
+    audio_element_reset_state(i2sStreamWriter);
     audio_pipeline_reset_ringbuffer(pipeline);
     audio_pipeline_reset_items_state(pipeline);
+    isPlaying = 0;
 }
 
 void radio_stop()
@@ -223,9 +271,9 @@ void radio_stop()
     audio_pipeline_terminate(pipeline);
 
     /* Terminate the pipeline before removing the listener */
-    audio_pipeline_unregister(pipeline, http_stream_reader);
-    audio_pipeline_unregister(pipeline, i2s_stream_writer);
-    audio_pipeline_unregister(pipeline, mp3_decoder);
+    audio_pipeline_unregister(pipeline, httpStreamReader);
+    audio_pipeline_unregister(pipeline, i2sStreamWriter);
+    audio_pipeline_unregister(pipeline, mp3Decoder);
 
     audio_pipeline_remove_listener(pipeline);
 
@@ -238,11 +286,23 @@ void radio_stop()
 
     /* Release all resources */
     audio_pipeline_deinit(pipeline);
-    audio_element_deinit(http_stream_reader);
-    audio_element_deinit(i2s_stream_writer);
-    audio_element_deinit(mp3_decoder);
-    esp_periph_set_destroy(set);
+    audio_element_deinit(httpStreamReader);
+    audio_element_deinit(i2sStreamWriter);
+    audio_element_deinit(mp3Decoder);
 
     isPlaying = 0;
+    isInit = 0;
     ESP_LOGI(TAG, "[ 7 ] Finished");
+}
+
+static int httpStreamEventHandle(http_stream_event_msg_t *msg)
+{
+    if (msg->event_id == HTTP_STREAM_RESOLVE_ALL_TRACKS) 
+        return ESP_OK;
+
+    if (msg->event_id == HTTP_STREAM_FINISH_TRACK) 
+        return http_stream_next_track(msg->el);
+    if (msg->event_id == HTTP_STREAM_FINISH_PLAYLIST) 
+        return http_stream_fetch_again(msg->el);
+    return ESP_OK;
 }
