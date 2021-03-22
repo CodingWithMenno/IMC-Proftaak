@@ -41,12 +41,8 @@
 
 #include "radioController.h"
 
-// Starts the pipelines, streams, etc.
-static void init();
 // Checks wheter the channel is corrupted and/or stopped
 static void update();
-// Stops the radio, closes all the pipelines, streams, etc.
-static void stop();
 // Stops the radio from playing (does not close pipelines, streams, etc.)
 static void reset();
 // Updates the http stream
@@ -54,7 +50,7 @@ static int httpStreamEventHandle(http_stream_event_msg_t*);
 
 static const char *TAG = "HTTP_MP3_EXAMPLE";
 
-static int running = 1;
+static int running = 0;
 static int isInit = 0;
 static int isPlaying = 0;
 
@@ -100,9 +96,9 @@ void radio_switch(char channel[])
 void radio_task(void *p)
 {
     radioMutex = xSemaphoreCreateMutex();
-    init();
-
     running = 1;
+    radio_init();
+
     while (running)
     {
         if (isPlaying)
@@ -115,7 +111,8 @@ void radio_task(void *p)
         vTaskDelay(50 / portTICK_RATE_MS);
     }
     
-    stop();
+    radio_stop();
+    vTaskDelete(NULL);
 }
 
 void radio_quit()
@@ -129,14 +126,13 @@ static void update()
 {
     audio_event_iface_msg_t msg;
     esp_err_t ret = audio_event_iface_listen(evt, &msg, 200);
-    if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "[ * ] Event interface error : %d", ret);
+    if (ret != ESP_OK)
         return;
-    }
 
     if (msg.source_type == AUDIO_ELEMENT_TYPE_ELEMENT
-        && msg.source == (void *) mp3Decoder
-        && msg.cmd == AEL_MSG_CMD_REPORT_MUSIC_INFO) {
+        && msg.source == (void *) mp3_decoder
+        && msg.cmd == AEL_MSG_CMD_REPORT_MUSIC_INFO) 
+    {
         audio_element_info_t music_info = {0};
         audio_element_getinfo(mp3Decoder, &music_info);
 
@@ -156,9 +152,10 @@ static void update()
     }
 }
 
-static void init()
+void radio_init()
 {
-    xSemaphoreTake(radioMutex, portMAX_DELAY);
+    if (running)
+        xSemaphoreTake(radioMutex, portMAX_DELAY);
 
     esp_err_t err = nvs_flash_init();
     if (err == ESP_ERR_NVS_NO_FREE_PAGES) 
@@ -243,7 +240,9 @@ static void init()
     audio_event_iface_set_listener(esp_periph_set_get_event_iface(set), evt);
 
     isInit = 1;
-    xSemaphoreGive(radioMutex);
+
+    if (running)
+        xSemaphoreGive(radioMutex);
 }
 
 void radio_reset()
@@ -264,7 +263,7 @@ static void reset()
     isPlaying = 0;
 }
 
-static void stop()
+void radio_stop()
 {
     ESP_LOGI(TAG, "[ 6 ] Stop audio_pipeline");
     audio_pipeline_stop(pipeline);
@@ -294,7 +293,6 @@ static void stop()
     isPlaying = 0;
     isInit = 0;
     ESP_LOGI(TAG, "[ 7 ] Finished");
-    vTaskDelete(NULL);
 }
 
 static int httpStreamEventHandle(http_stream_event_msg_t *msg)

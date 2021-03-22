@@ -72,7 +72,8 @@ void mp3_task(void *p)
         vTaskDelay(50 / portTICK_RATE_MS);
     }
     
-    reset();
+    // reset();
+    mp3_stop();
     freeQueue(&playlist);
     vTaskDelete(NULL);
 }
@@ -142,6 +143,7 @@ static void update()
     /* Stop when the last pipeline element (i2sStreamWriter in this case) receives stop event */
     if ((int)msg.data == AEL_STATUS_STATE_FINISHED) 
     {
+        vTaskDelay(500/portTICK_RATE_MS);
         ESP_LOGW(TAG, "[ * ] Stop event received");
         reset();
     }

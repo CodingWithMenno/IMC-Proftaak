@@ -16,7 +16,16 @@
 #include "qwiic_twist.h"
 #include "sdcard-mp3.h"
 #include "radioController.h"
+#include "sntp_sync.h"
 #include "goertzel.h"
+
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+#include <time.h>
+#include <string.h>
 
 #define TAG "app"
 
@@ -41,6 +50,7 @@ static i2c_lcd1602_info_t *lcd_info;
 static void onEncoderClicked();
 static void onEncoderPressed();
 static void onEncoderMoved(int16_t);
+void stmp_timesync_event(struct timeval *tv);
 
 //boolean to check if you went back a menu
 static bool wentBack = false;
@@ -68,11 +78,6 @@ static void i2c_master_init(void)
 static void wait(unsigned int time)
 {
     vTaskDelay(time / portTICK_RATE_MS);
-}
-
-void radioInit()
-{
-    xTaskCreate(&radio_task, "radio_task", 1024 * 2, NULL, 8, NULL);
 }
 
 void i2cInit() 
@@ -110,7 +115,6 @@ void i2cInit()
     
     qwiic_twist_init(qwiic_info);
     menu_initMenus(lcd_info);
-
     qwiic_twist_start_task(qwiic_info);
 }
 
@@ -146,27 +150,33 @@ static void onEncoderMoved(int16_t diff)
     }
 }
 
+void stmp_timesync_event(struct timeval *tv)
+{
+    ESP_LOGI(TAG, "Notification of a time synchronization event");
+
+    time_t now;
+    struct tm timeinfo;
+    time(&now);
+    
+    char strftime_buf[64];
+    localtime_r(&now, &timeinfo);
+    strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
+    ESP_LOGI(TAG, "The current date/time in Amsterdam is: %s", strftime_buf);
+    printf(strftime_buf);
+}
+
 void app_main()
 {
     i2cInit();
-    // radioInit();
 
-    // radio_switch("538");
-    // wait(10000);
-    // radio_switch("SKY");
-
-    // mp3_play("/sdcard/test.mp3");
-    // wait(1000);
-    // wait(1000);
-    // wait(1000);
-    // mp3_play("/sdcard/test.mp3");
+    // Initialise wifi and setup the time
+    radio_init();
+    wait(500);
+    radio_stop();
+    timesync_sntpSync(stmp_timesync_event);
 
     while(1)
     {
-        // mp3_update();
-        // mp3_addToQueue("/sdcard/test.mp3");
-        wait(500);
+        wait(5000);
     }
-
-    // radio_stop();
 }

@@ -1,6 +1,9 @@
 #ifndef RADIOCONTROLLER_H
 #define RADIOCONTROLLER_H
 
+void radio_init();
+void radio_stop();
+
 /*
 Switches the radio to another channel
 
