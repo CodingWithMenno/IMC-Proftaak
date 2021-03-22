@@ -108,13 +108,13 @@ static int displayMenu(i2c_lcd1602_info_t *lcd_info, unsigned int menuToDisplay)
         lcdMenus[currentLcdMenu].menuExit();
 
     doFancyAnimation(lcd_info);
+    currentMenuItem = newMenu.items[0].id;
+    currentLcdMenu = newMenu.id;
 
     //Perform the init function of the new menu
     if (newMenu.menuEnter != NULL)
         newMenu.menuEnter();
 
-    currentMenuItem = newMenu.items[0].id;
-    currentLcdMenu = newMenu.id;
     return refreshMenu(lcd_info, menuToDisplay, currentMenuItem);
 }
 

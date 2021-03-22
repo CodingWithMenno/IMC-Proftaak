@@ -75,7 +75,7 @@ void onEnterClock()
     vTaskDelay(2000/portTICK_RATE_MS);
 
     talking_clock_fill_queue();
-    // timer_1_sec = xTimerCreate("MyTimer", pdMS_TO_TICKS(1000), pdTRUE, (void *)1, &timer_1_sec_callback);
+    timer_1_sec = xTimerCreate("MyTimer", pdMS_TO_TICKS(1000), pdTRUE, (void *)1, &timer_1_sec_callback);
     // if (xTimerStart(timer_1_sec, 10) != pdPASS)
     // {
     //     printf("Cannot start 1 second timer");

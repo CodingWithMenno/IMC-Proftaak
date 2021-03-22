@@ -178,11 +178,14 @@ void app_main()
     // wait(1000);
     // wait(1000);
     // mp3_play("/sdcard/test.mp3");
-
+    wait(500);
     menu_goToNextItem(lcd_info);
     wait(500);
     menu_onClick(lcd_info);
     wait(500);
+
+    // char* hallo = "hallo";
+    // menu_updateMenu(menu_getLcdInfo(), (void *) hallo);
 
     // mp3_addToQueue("/sdcard/clock/itsnow.mp3");
     // wait(100);
