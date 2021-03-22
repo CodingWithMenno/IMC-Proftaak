@@ -139,7 +139,7 @@ static void update()
         return;
     }
 
-    /* Stop when the last pipeline element (i2s_stream_writer in this case) receives stop event */
+    /* Stop when the last pipeline element (i2sStreamWriter in this case) receives stop event */
     if ((int)msg.data == AEL_STATUS_STATE_FINISHED) 
     {
         ESP_LOGW(TAG, "[ * ] Stop event received");
@@ -205,7 +205,7 @@ static void init(char *fileName)
     audio_pipeline_register(pipeline, mp3Decoder, "mp3");
     audio_pipeline_register(pipeline, i2sStreamWriter, "i2s");
 
-    ESP_LOGI(TAG, "[3.5] Link it together [sdcard]-->fatfs_stream-->mp3_decoder-->i2s_stream-->[codec_chip]");
+    ESP_LOGI(TAG, "[3.5] Link it together [sdcard]-->fatfs_stream-->mp3Decoder-->i2s_stream-->[codec_chip]");
     audio_pipeline_link(pipeline, (const char *[]) {"file", "mp3", "i2s"}, 3);
 
     ESP_LOGI(TAG, "[3.6] Set up  uri (file as fatfs_stream, mp3 as mp3 decoder, and default output is i2s)");
@@ -252,7 +252,6 @@ void mp3_stop()
     audio_element_deinit(fatfsStreamReader);
     audio_element_deinit(i2sStreamWriter);
     audio_element_deinit(mp3Decoder);
-    // esp_periph_set_destroy(set);
 
     isPlaying = 0;
 }
