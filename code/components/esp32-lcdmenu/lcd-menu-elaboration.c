@@ -97,6 +97,11 @@ void onUpdateClock(void *p)
     strcpy(lcdMenus[CLOCK_MENU_ID].items[0].text, (char*) p);
 }
 
+void onClickClockItem()
+{
+    talkingClock_fillQueue();
+}
+
 //Speech menu
 void onEnterSpeech()
 {

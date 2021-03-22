@@ -130,7 +130,7 @@ static void update()
         return;
 
     if (msg.source_type == AUDIO_ELEMENT_TYPE_ELEMENT
-        && msg.source == (void *) mp3_decoder
+        && msg.source == (void *) mp3Decoder
         && msg.cmd == AEL_MSG_CMD_REPORT_MUSIC_INFO) 
     {
         audio_element_info_t music_info = {0};
