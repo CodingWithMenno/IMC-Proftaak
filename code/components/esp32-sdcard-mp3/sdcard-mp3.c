@@ -62,7 +62,8 @@ void mp3_task(void *p)
         vTaskDelay(50 / portTICK_RATE_MS);
     }
     
-    reset();
+    // reset();
+    mp3_stop();
     freeQueue(&playlist);
     vTaskDelete(NULL);
 }

@@ -170,56 +170,13 @@ void app_main()
     i2cInit();
 
     // Initialise wifi and setup the time
-    xTaskCreate(&radio_task, "radio_task", 1024 * 3, NULL, 8, NULL);
+    radio_init();
     wait(500);
-    radio_quit();
+    radio_stop();
     timesync_sntpSync(stmp_timesync_event);
-
-    // wait(500);
-    // menu_goToNextItem(lcd_info);
-    // wait(500);
-    // menu_onClick(lcd_info);
-    // wait(500);
-    // menu_goToParentMenu(lcd_info);
-    // wait(500);
-    // menu_goToNextItem(lcd_info);
-    // wait(500);
-    // menu_onClick(lcd_info);
-
-
-    // radio_switch("538");
-    // wait(10000);
-    // radio_switch("SKY");
-
-    // mp3_play("/sdcard/clock/1.mp3");
-    // wait(1000);
-    // wait(1000);
-    // wait(1000);
-    // mp3_play("/sdcard/test.mp3");
-
-    // char* hallo = "hallo";
-    // menu_updateMenu(menu_getLcdInfo(), (void *) hallo);
-
-    // mp3_addToQueue("/sdcard/clock/itsnow.mp3");
-    // wait(100);
-    // mp3_addToQueue("/sdcard/clock/1.mp3");
-    // wait(100);
-    // mp3_addToQueue("/sdcard/clock/hour.mp3");
-    // wait(100);
-    // mp3_addToQueue("/sdcard/clock/5.mp3");
-    // wait(100);
-    // mp3_addToQueue("/sdcard/clock/en.mp3");
-    // wait(100);
-    // mp3_addToQueue("/sdcard/clock/40.mp3");
-
-
 
     while(1)
     {
-        // mp3_update();
-        //mp3_addToQueue("/sdcard/test.mp3");
         wait(5000);
     }
-
-    // radio_stop();
 }

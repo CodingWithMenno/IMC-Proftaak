@@ -42,7 +42,7 @@ void onClickEchoSpeech(i2c_lcd1602_info_t* lcd_info)
 void onEnterRadio()
 {
     printf("Entered the radio menu\n");
-    xTaskCreate(&radio_task, "radio_task", 1024 * 3, NULL, 8, NULL);
+    xTaskCreate(&radio_task, "radio_task", 1024 * 4, NULL, 8, NULL);
 }
 
 void onExitRadio()

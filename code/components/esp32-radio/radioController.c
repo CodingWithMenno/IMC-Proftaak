@@ -41,15 +41,15 @@
 
 #include "radioController.h"
 
-static void init();
+// static void init();
 static void update();
-static void stop();
+// static void stop();
 static void reset();
 static int _http_stream_event_handle(http_stream_event_msg_t*);
 
 static const char *TAG = "HTTP_MP3_EXAMPLE";
 
-static int running = 1;
+static int running = 0;
 static int isInit = 0;
 static int isPlaying = 0;
 
@@ -91,9 +91,9 @@ void radio_switch(char channel[])
 void radio_task(void *p)
 {
     radioMutex = xSemaphoreCreateMutex();
-    init();
-
     running = 1;
+    radio_init();
+
     while (running)
     {
         if (isPlaying)
@@ -106,7 +106,8 @@ void radio_task(void *p)
         vTaskDelay(50 / portTICK_RATE_MS);
     }
     
-    stop();
+    radio_stop();
+    vTaskDelete(NULL);
 }
 
 void radio_quit()
@@ -146,9 +147,10 @@ static void update()
     }
 }
 
-void init()
+void radio_init()
 {
-    xSemaphoreTake(radioMutex, portMAX_DELAY);
+    if (running)
+        xSemaphoreTake(radioMutex, portMAX_DELAY);
 
     esp_err_t err = nvs_flash_init();
     if (err == ESP_ERR_NVS_NO_FREE_PAGES) 
@@ -233,7 +235,9 @@ void init()
     audio_event_iface_set_listener(esp_periph_set_get_event_iface(set), evt);
 
     isInit = 1;
-    xSemaphoreGive(radioMutex);
+
+    if (running)
+        xSemaphoreGive(radioMutex);
 }
 
 void radio_reset()
@@ -254,7 +258,7 @@ static void reset()
     isPlaying = 0;
 }
 
-static void stop()
+void radio_stop()
 {
     ESP_LOGI(TAG, "[ 6 ] Stop audio_pipeline");
     audio_pipeline_stop(pipeline);
@@ -285,7 +289,6 @@ static void stop()
     isPlaying = 0;
     isInit = 0;
     ESP_LOGI(TAG, "[ 7 ] Finished");
-    vTaskDelete(NULL);
 }
 
 static int _http_stream_event_handle(http_stream_event_msg_t *msg)
