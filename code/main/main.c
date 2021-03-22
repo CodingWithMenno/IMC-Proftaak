@@ -127,9 +127,9 @@ void i2cInit()
     mcp23017_info->scl_gpio = 17;
 
     mcp23017_init(mcp23017_info);
-    mcp23017_set_mode(mcp23017_info, 0, MCP23017_GPIO_OUTPUT);
-    mcp23017_set_level(mcp23017_info, 1, true);
-    //mcp23017_start_task(mcp23017_info);
+    mcp23017_set_mode(mcp23017_info, 0, MCP23017_GPIO_INPUT);
+    //mcp23017_set_level(mcp23017_info, 1, true);
+    mcp23017_start_task(mcp23017_info);
 }
 
 static void onEncoderPressed()
