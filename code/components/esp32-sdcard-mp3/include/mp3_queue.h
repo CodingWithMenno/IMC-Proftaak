@@ -16,7 +16,7 @@ Adds an item to the end of the queue
 
 -Parameters: A pointer to the head of the queue, the data for the new item
 */
-void enqueue(Queue**, char*);
+void queue_enqueue(Queue**, char*);
 
 /*
 Removes the first item (and from the memory) from the queue and returns it data
@@ -24,13 +24,13 @@ Removes the first item (and from the memory) from the queue and returns it data
 -Returns: The data of the first item in the queue
 -Paramters: A pointer to the head of the queue
 */
-char* front(Queue**);
+char* queue_front(Queue**);
 
 /*
 Deletes the whole queue from the memory and sets the head to NULL
 
 -Parameters: A pointer to the head of the queue
 */
-void freeQueue(Queue**);
+void queue_freeQueue(Queue**);
 
 #endif

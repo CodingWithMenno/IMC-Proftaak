@@ -56,7 +56,7 @@ void mp3_task(void *p)
         if (!isPlaying && playlist != NULL)
         {
             // Remove the first in the queue and get the .mp3 filepath
-            char *audioFile = front(&playlist);
+            char *audioFile = queue_front(&playlist);
             if (audioFile != NULL)
             {
                 // Play the .mp3 file
@@ -74,7 +74,7 @@ void mp3_task(void *p)
     
     // reset();
     mp3_stop();
-    freeQueue(&playlist);
+    queue_freeQueue(&playlist);
     vTaskDelete(NULL);
 }
 
@@ -84,7 +84,7 @@ void mp3_addToQueue(char *fileName)
         return;
 
     xSemaphoreTake(mp3Mutex, portMAX_DELAY);
-    enqueue(&playlist, fileName);
+    queue_enqueue(&playlist, fileName);
     xSemaphoreGive(mp3Mutex);
 }
 
