@@ -119,6 +119,7 @@ static int displayMenu(i2c_lcd1602_info_t *lcd_info, unsigned int menuToDisplay)
     return refreshMenu(lcd_info, menuToDisplay, currentMenuItem);
 }
 
+//Refreshes the display of the menu on the lcd
 static int refreshMenu(i2c_lcd1602_info_t *lcd_info, unsigned int menuToDisplay, unsigned int selectedItem)
 {
     //Clear the display
@@ -343,6 +344,7 @@ int menu_initMenus(i2c_lcd1602_info_t *lcd_info)
     return displayMenu(lcd_info, MAIN_MENU_ID);
 }
 
+//Animation that plays when the menus changes
 static void doFancyAnimation(i2c_lcd1602_info_t* lcd_info)
 {
     i2c_lcd1602_move_cursor(lcd_info, 0, 0);
