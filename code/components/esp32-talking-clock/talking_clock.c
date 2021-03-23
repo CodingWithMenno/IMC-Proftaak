@@ -31,28 +31,28 @@ esp_err_t talkingClock_fillQueue()
 
 	int minute = timeinfo.tm_min;
 
-	// Het is
-	mp3_addToQueue(talkingClock_files[TALKING_CLOCK_ITSNOW_INDEX]);
+	// "Het is" audio file
+ 	mp3_addToQueue(talkingClock_files[TALKING_CLOCK_ITSNOW_INDEX]);
 
-	// Het uur
+	// "Het uur" audio files + time checker
 	int hourId = hour == 0 ? 14 : (hour + 2);
 	mp3_addToQueue(talkingClock_files[hourId]);
 	mp3_addToQueue(talkingClock_files[TALKING_CLOCK_HOUR_INDEX]);
-	if (minute == 0)
+	if (minute == 0)	// 0 minutes
 	{
 		return ESP_OK;
-	} else if (minute % 10 == 0)
+	} else if (minute % 10 == 0)	// Tens (10, 20, 30, etc.)
 	{
 		int minuteId = minute / 10 + 15;
 		mp3_addToQueue(talkingClock_files[minuteId]);
-	} else if (minute < 20)
+	} else if (minute < 20)			// Under 20 min
 	{
 		int unitId = (minute % 10) + 2;
 		mp3_addToQueue(talkingClock_files[unitId]);
 
 		if (minute > 10)
 			mp3_addToQueue(talkingClock_files[TALKING_CLOCK_10_INDEX]);
-	} else
+	} else	// All other cases
 	{
 		int unitId = (minute % 10) + 2;
 		mp3_addToQueue(talkingClock_files[unitId]);

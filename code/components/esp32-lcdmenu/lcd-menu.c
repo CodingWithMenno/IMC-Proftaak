@@ -35,7 +35,7 @@ static unsigned int currentLcdMenu;
 static unsigned int currentMenuItem;
 
 
-int menu_updateMenu(i2c_lcd1602_info_t *lcd_info, void *p)
+int menu_updateMenu(i2c_lcd1602_info_t *lcdInfo, void *p)
 {
     if (lcdMenus[currentLcdMenu].update == NULL)
         return LCD_MENU_ERROR;
@@ -43,38 +43,38 @@ int menu_updateMenu(i2c_lcd1602_info_t *lcd_info, void *p)
     if (p != NULL)
         lcdMenus[currentLcdMenu].update(p);
 
-    return refreshMenu(lcd_info, currentLcdMenu, currentMenuItem);
+    return refreshMenu(lcdInfo, currentLcdMenu, currentMenuItem);
 }
 
-int menu_goToParentMenu(i2c_lcd1602_info_t *lcd_info)
+int menu_goToParentMenu(i2c_lcd1602_info_t *lcdInfo)
 {
     if (lcdMenus[currentLcdMenu].parent == INVALID)
         return LCD_MENU_ERROR;
     
-    return displayMenu(lcd_info, lcdMenus[currentLcdMenu].parent);
+    return displayMenu(lcdInfo, lcdMenus[currentLcdMenu].parent);
 }
 
-int menu_onClick(i2c_lcd1602_info_t *lcd_info)
+int menu_onClick(i2c_lcd1602_info_t *lcdInfo)
 {
     if (lcdMenus[currentLcdMenu].items[currentMenuItem].onClick == NULL)
         return LCD_MENU_ERROR;
     
-    lcdMenus[currentLcdMenu].items[currentMenuItem].onClick(lcd_info);
+    lcdMenus[currentLcdMenu].items[currentMenuItem].onClick(lcdInfo);
     return LCD_MENU_OKE;
 }
 
-int menu_goToNextItem(i2c_lcd1602_info_t *lcd_info)
+int menu_goToNextItem(i2c_lcd1602_info_t *lcdInfo)
 {
-    return displayCursorOn(lcd_info, currentMenuItem + 1);
+    return displayCursorOn(lcdInfo, currentMenuItem + 1);
 }
 
-int menu_goToPreviousitem(i2c_lcd1602_info_t *lcd_info)
+int menu_goToPreviousitem(i2c_lcd1602_info_t *lcdInfo)
 {
-    return displayCursorOn(lcd_info, currentMenuItem - 1);
+    return displayCursorOn(lcdInfo, currentMenuItem - 1);
 }
 
 //Sets the user selector (cursor) on the given menu item
-static int displayCursorOn(i2c_lcd1602_info_t *lcd_info, unsigned int itemToSelect)
+static int displayCursorOn(i2c_lcd1602_info_t *lcdInfo, unsigned int itemToSelect)
 {
     LCD_MENU displayedMenu = lcdMenus[currentLcdMenu];
     LCD_MENU_ITEM currentItem = displayedMenu.items[currentMenuItem];
@@ -85,12 +85,12 @@ static int displayCursorOn(i2c_lcd1602_info_t *lcd_info, unsigned int itemToSele
         return LCD_MENU_ERROR;
     
     //Remove the old cursor
-    i2c_lcd1602_move_cursor(lcd_info, currentItem.xCoord - 1, currentItem.yCoord);
-    i2c_lcd1602_write_char(lcd_info, ' ');
+    i2c_lcd1602_move_cursor(lcdInfo, currentItem.xCoord - 1, currentItem.yCoord);
+    i2c_lcd1602_write_char(lcdInfo, ' ');
 
     //Place the new cursor
-    i2c_lcd1602_move_cursor(lcd_info, newItem.xCoord - 1, newItem.yCoord);
-    i2c_lcd1602_write_char(lcd_info, '>');
+    i2c_lcd1602_move_cursor(lcdInfo, newItem.xCoord - 1, newItem.yCoord);
+    i2c_lcd1602_write_char(lcdInfo, '>');
 
     currentMenuItem = itemToSelect;
 
@@ -98,7 +98,7 @@ static int displayCursorOn(i2c_lcd1602_info_t *lcd_info, unsigned int itemToSele
 }
 
 //Displays the given menu to the lcd
-static int displayMenu(i2c_lcd1602_info_t *lcd_info, unsigned int menuToDisplay)
+static int displayMenu(i2c_lcd1602_info_t *lcdInfo, unsigned int menuToDisplay)
 {
     //Get the menu to display
     LCD_MENU newMenu = lcdMenus[menuToDisplay];
@@ -110,26 +110,27 @@ static int displayMenu(i2c_lcd1602_info_t *lcd_info, unsigned int menuToDisplay)
     currentMenuItem = newMenu.items[0].id;
     currentLcdMenu = newMenu.id;
 
-    doFancyAnimation(lcd_info);
+    doFancyAnimation(lcdInfo);
 
     //Perform the init function of the new menu
     if (newMenu.menuEnter != NULL)
         newMenu.menuEnter();
 
-    return refreshMenu(lcd_info, menuToDisplay, currentMenuItem);
+    return refreshMenu(lcdInfo, menuToDisplay, currentMenuItem);
 }
 
-static int refreshMenu(i2c_lcd1602_info_t *lcd_info, unsigned int menuToDisplay, unsigned int selectedItem)
+//Refreshes the display of the menu on the lcd
+static int refreshMenu(i2c_lcd1602_info_t *lcdInfo, unsigned int menuToDisplay, unsigned int selectedItem)
 {
     //Clear the display
-    i2c_lcd1602_clear(lcd_info);
+    i2c_lcd1602_clear(lcdInfo);
 
     //Get the menu to display
     LCD_MENU newMenu = lcdMenus[menuToDisplay];
 
     //Write the title of the menu to the screen
-    i2c_lcd1602_move_cursor(lcd_info, newMenu.xCoord, 0);
-    i2c_lcd1602_write_string(lcd_info, newMenu.text);
+    i2c_lcd1602_move_cursor(lcdInfo, newMenu.xCoord, 0);
+    i2c_lcd1602_write_string(lcdInfo, newMenu.text);
 
     //Write each item on the screen
     for (int i = 0; i < MAX_ITEMS_ON_MENU; i++)
@@ -139,23 +140,23 @@ static int refreshMenu(i2c_lcd1602_info_t *lcd_info, unsigned int menuToDisplay,
             break;
 
         //Write the item on the screen
-        i2c_lcd1602_move_cursor(lcd_info, newMenu.items[i].xCoord, newMenu.items[i].yCoord);
-        i2c_lcd1602_write_string(lcd_info, newMenu.items[i].text);
+        i2c_lcd1602_move_cursor(lcdInfo, newMenu.items[i].xCoord, newMenu.items[i].yCoord);
+        i2c_lcd1602_write_string(lcdInfo, newMenu.items[i].text);
     }
 
-    return displayCursorOn(lcd_info, selectedItem);
+    return displayCursorOn(lcdInfo, selectedItem);
 }
 
-int menu_initMenus(i2c_lcd1602_info_t *lcd_info)
+int menu_initMenus(i2c_lcd1602_info_t *lcdInfo)
 {
-    tmp_lcd_info = lcd_info;
+    tmp_lcd_info = lcdInfo;
 
     //Hides the cursor
-    i2c_lcd1602_set_cursor(lcd_info, false);
+    i2c_lcd1602_set_cursor(lcdInfo, false);
 
     //Custom white rectangle
     uint8_t rectangle[8] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
-    i2c_lcd1602_define_char(lcd_info, I2C_LCD1602_CHARACTER_CUSTOM_0 , rectangle);
+    i2c_lcd1602_define_char(lcdInfo, I2C_LCD1602_CHARACTER_CUSTOM_0 , rectangle);
 
     //Allocate memory for each menu
     lcdMenus = (LCD_MENU*) malloc(sizeof(LCD_MENU) * TOTAL_MENUS);
@@ -340,39 +341,40 @@ int menu_initMenus(i2c_lcd1602_info_t *lcd_info)
 
     //Display the main menu
     currentLcdMenu = INVALID;
-    return displayMenu(lcd_info, MAIN_MENU_ID);
+    return displayMenu(lcdInfo, MAIN_MENU_ID);
 }
 
-static void doFancyAnimation(i2c_lcd1602_info_t* lcd_info)
+//Animation that plays when the menus changes
+static void doFancyAnimation(i2c_lcd1602_info_t* lcdInfo)
 {
-    i2c_lcd1602_move_cursor(lcd_info, 0, 0);
+    i2c_lcd1602_move_cursor(lcdInfo, 0, 0);
     for(int i = 0; i < 20; i++)
     {
-        i2c_lcd1602_write_char(lcd_info, I2C_LCD1602_CHARACTER_CUSTOM_0);
+        i2c_lcd1602_write_char(lcdInfo, I2C_LCD1602_CHARACTER_CUSTOM_0);
         vTaskDelay(15 / portTICK_RATE_MS);
     }
-    i2c_lcd1602_move_cursor(lcd_info, 19, 1);
-    i2c_lcd1602_set_right_to_left(lcd_info);
+    i2c_lcd1602_move_cursor(lcdInfo, 19, 1);
+    i2c_lcd1602_set_right_to_left(lcdInfo);
     for(int i = 0; i < 20; i++)
     {
-        i2c_lcd1602_write_char(lcd_info, I2C_LCD1602_CHARACTER_CUSTOM_0);
+        i2c_lcd1602_write_char(lcdInfo, I2C_LCD1602_CHARACTER_CUSTOM_0);
         vTaskDelay(15 / portTICK_RATE_MS);
     }
-    i2c_lcd1602_move_cursor(lcd_info, 0, 2);
-    i2c_lcd1602_set_left_to_right(lcd_info);
+    i2c_lcd1602_move_cursor(lcdInfo, 0, 2);
+    i2c_lcd1602_set_left_to_right(lcdInfo);
     for(int i = 0; i < 20; i++)
     {
-        i2c_lcd1602_write_char(lcd_info, I2C_LCD1602_CHARACTER_CUSTOM_0);
+        i2c_lcd1602_write_char(lcdInfo, I2C_LCD1602_CHARACTER_CUSTOM_0);
         vTaskDelay(15 / portTICK_RATE_MS);
     }
-    i2c_lcd1602_move_cursor(lcd_info, 19, 3);
-    i2c_lcd1602_set_right_to_left(lcd_info);
+    i2c_lcd1602_move_cursor(lcdInfo, 19, 3);
+    i2c_lcd1602_set_right_to_left(lcdInfo);
     for(int i = 0; i < 20; i++)
     {
-        i2c_lcd1602_write_char(lcd_info, I2C_LCD1602_CHARACTER_CUSTOM_0);
+        i2c_lcd1602_write_char(lcdInfo, I2C_LCD1602_CHARACTER_CUSTOM_0);
         vTaskDelay(15 / portTICK_RATE_MS);
     }
-    i2c_lcd1602_set_left_to_right(lcd_info);
+    i2c_lcd1602_set_left_to_right(lcdInfo);
     vTaskDelay(100 / portTICK_RATE_MS);
 }
 
