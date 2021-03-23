@@ -1,9 +1,3 @@
-/* LwIP SNTP example
-   This example code is in the Public Domain (or CC0 licensed, at your option.)
-   Unless required by applicable law or agreed to in writing, this
-   software is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
-   CONDITIONS OF ANY KIND, either express or implied.
-*/
 #include "sntp_sync.h"
 #include <string.h>
 #include <time.h>
@@ -28,7 +22,7 @@ void timesync_sntpSync(sntp_sync_time_cb_t callback)
 {	
 	// Set callback for when time synchronisation is done
 	sntp_set_time_sync_notification_cb(callback);
-	// Set timezone to Amsterdam Time and print local time
+	// Set timezone to Amsterdam Time
     setenv("TZ", "CET-1CEST-2,M3.5.0/02:00:00,M10.5.0/03:00:00", 1);
     tzset();
 	
@@ -65,6 +59,7 @@ static void timesync_obtainTime(void)
         ESP_LOGI(TAG, "Waiting for system time to be set... (%d/%d)", retry, retryCount);
         vTaskDelay(2000 / portTICK_PERIOD_MS);
     }
+    // Update the time
     time(&now);
     localtime_r(&now, &timeinfo);
 

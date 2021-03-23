@@ -30,7 +30,7 @@
 #define TAG "app"
 
 // Undefine USE_STDIN if no stdin is available (e.g. no USB UART) - a fixed delay will occur instead of a wait for a keypress.
-//#define USE_STDIN  1
+// #define USE_STDIN  1
 #undef USE_STDIN
 
 #define I2C_MASTER_NUM           I2C_NUM_0
@@ -44,22 +44,22 @@
 #define LCD_NUM_VIS_COLUMNS		 20
 
 //lcd general settings
-static i2c_lcd1602_info_t *lcd_info;
+static i2c_lcd1602_info_t *lcdInfo;
 
 //rotary encoder functions
 static void onEncoderClicked();
 static void onEncoderPressed();
 static void onEncoderMoved(int16_t);
-void stmp_timesync_event(struct timeval *tv);
+void stmpTimesyncEvent(struct timeval *tv);
 
 //boolean to check if you went back a menu
 static bool wentBack = false;
 static int clickCounter = 0;
 
 
-static void i2c_master_init(void)
+static void i2cMasterInit(void)
 {
-    int i2c_master_port = I2C_MASTER_NUM;
+    int i2cMasterPort = I2C_MASTER_NUM;
     i2c_config_t conf;
     conf.mode = I2C_MODE_MASTER;
     conf.sda_io_num = I2C_MASTER_SDA_IO;
@@ -67,90 +67,94 @@ static void i2c_master_init(void)
     conf.scl_io_num = I2C_MASTER_SCL_IO;
     conf.scl_pullup_en = GPIO_PULLUP_DISABLE;  // GY-2561 provides 10kΩ pullups
     conf.master.clk_speed = I2C_MASTER_FREQ_HZ;
-    i2c_param_config(i2c_master_port, &conf);
-    i2c_driver_install(i2c_master_port, conf.mode,
+    i2c_param_config(i2cMasterPort, &conf);
+    i2c_driver_install(i2cMasterPort, conf.mode,
                        I2C_MASTER_RX_BUF_LEN,
                        I2C_MASTER_TX_BUF_LEN, 0);
 }
 
-// WARNING: ESP32 does not support blocking input from stdin yet, so this polls
-// the UART and effectively hangs up the SDK.
+// Wait function
 static void wait(unsigned int time)
 {
     vTaskDelay(time / portTICK_RATE_MS);
 }
 
+// Init all the components that make use of the I2C protocol.
 void i2cInit() 
 {
     // Set up I2C
-    i2c_master_init();
-    i2c_port_t i2c_num = I2C_MASTER_NUM;
+    i2cMasterInit();
+    i2c_port_t i2cNum = I2C_MASTER_NUM;
     uint8_t address = CONFIG_LCD1602_I2C_ADDRESS;
     
 
     // // Set up the SMBus
-    smbus_info_t *smbus_info = smbus_malloc();
-    smbus_init(smbus_info, i2c_num, address);
-    smbus_set_timeout(smbus_info, 1000 / portTICK_RATE_MS);
+    smbus_info_t *smbusInfo = smbus_malloc();
+    smbus_init(smbusInfo, i2cNum, address);
+    smbus_set_timeout(smbusInfo, 1000 / portTICK_RATE_MS);
 
     // Lcd and menu init
-    lcd_info = i2c_lcd1602_malloc();
-    i2c_lcd1602_init(lcd_info, smbus_info, true, LCD_NUM_ROWS, LCD_NUM_COLUMNS, LCD_NUM_VIS_COLUMNS);
-    i2c_lcd1602_set_cursor(lcd_info, true);
-    i2c_lcd1602_move_cursor(lcd_info, 4, 1);
-    i2c_lcd1602_write_string(lcd_info, "Starting...");
+    lcdInfo = i2c_lcd1602_malloc();
+    i2c_lcd1602_init(lcdInfo, smbusInfo, true, LCD_NUM_ROWS, LCD_NUM_COLUMNS, LCD_NUM_VIS_COLUMNS);
+    i2c_lcd1602_set_cursor(lcdInfo, true);
+    i2c_lcd1602_move_cursor(lcdInfo, 4, 1);
+    i2c_lcd1602_write_string(lcdInfo, "Starting...");
 
     //Rotary init
-    qwiic_twist_t *qwiic_info = (qwiic_twist_t*)malloc(sizeof(qwiic_twist_t));
+    qwiic_twist_t *qwiicInfo = (qwiic_twist_t*)malloc(sizeof(qwiic_twist_t));
 
-    qwiic_info->smbus_info = smbus_info;
-    qwiic_info->i2c_addr = QWIIC_TWIST_ADDRESS;
-    qwiic_info->port = i2c_num;
-    qwiic_info->xMutex = xSemaphoreCreateMutex();
-    qwiic_info->task_enabled = true;
-    qwiic_info->task_time = 0;
-    qwiic_info->onButtonPressed = &onEncoderPressed;
-    qwiic_info->onButtonClicked = &onEncoderClicked;
-    qwiic_info->onMoved = &onEncoderMoved;
+    qwiicInfo->smbus_info = smbusInfo;
+    qwiicInfo->i2c_addr = QWIIC_TWIST_ADDRESS;
+    qwiicInfo->port = i2cNum;
+    qwiicInfo->xMutex = xSemaphoreCreateMutex();
+    qwiicInfo->task_enabled = true;
+    qwiicInfo->task_time = 0;
+    qwiicInfo->onButtonPressed = &onEncoderPressed;
+    qwiicInfo->onButtonClicked = &onEncoderClicked;
+    qwiicInfo->onMoved = &onEncoderMoved;
     
-    qwiic_twist_init(qwiic_info);
-    menu_initMenus(lcd_info);
-    qwiic_twist_start_task(qwiic_info);
+    qwiic_twist_init(qwiicInfo);
+    menu_initMenus(lcdInfo);
+    qwiic_twist_start_task(qwiicInfo);
 }
 
+// Encoder method that is used when u hold the encoder button.
 static void onEncoderPressed()
 {
     clickCounter++;
     if(clickCounter == 5)
     {
-        menu_goToParentMenu(lcd_info);
+        menu_goToParentMenu(lcdInfo);
         clickCounter = 0;
         wentBack = true;
     }
 }
 
+// Encoder method that is used when u click the encoder button.
 static void onEncoderClicked()
 {
     if (!wentBack)
     {
-        menu_onClick(lcd_info);
+        menu_onClick(lcdInfo);
     }
     clickCounter = 0;
     wentBack = false; 
 }
 
+// Encoder method that is used to navigate left and right through the menu's.
 static void onEncoderMoved(int16_t diff)
 {
     if(diff>0)
     {
-        menu_goToNextItem(lcd_info); 
+        menu_goToNextItem(lcdInfo); 
     } else 
     {
-        menu_goToPreviousitem(lcd_info);
+        menu_goToPreviousitem(lcdInfo);
     }
 }
 
-void stmp_timesync_event(struct timeval *tv)
+// Method to update the time.
+void stmpTimesyncEvent(struct timeval *tv)
 {
     ESP_LOGI(TAG, "Notification of a time synchronization event");
 
@@ -158,11 +162,11 @@ void stmp_timesync_event(struct timeval *tv)
     struct tm timeinfo;
     time(&now);
     
-    char strftime_buf[64];
+    char strftimeBuf[64];
     localtime_r(&now, &timeinfo);
-    strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
-    ESP_LOGI(TAG, "The current date/time in Amsterdam is: %s", strftime_buf);
-    printf(strftime_buf);
+    strftime(strftimeBuf, sizeof(strftimeBuf), "%c", &timeinfo);
+    ESP_LOGI(TAG, "The current date/time in Amsterdam is: %s", strftimeBuf);
+    printf(strftimeBuf);
 }
 
 void app_main()
@@ -173,7 +177,7 @@ void app_main()
     radio_init();
     wait(500);
     radio_stop();
-    timesync_sntpSync(stmp_timesync_event);
+    timesync_sntpSync(stmpTimesyncEvent);
 
     while(1)
     {

@@ -16,25 +16,25 @@ This file is to work out the onClicks, onExit, onEnter and update functions of t
 */
 
 //Main menu
-void onClickMainEcho(i2c_lcd1602_info_t* lcd_info)
+void onClickMainEcho(i2c_lcd1602_info_t* lcdInfo)
 {
-    displayMenu(lcd_info, ECHO_MENU_ID);
+    displayMenu(lcdInfo, ECHO_MENU_ID);
 }
 
-void onClickMainRadio(i2c_lcd1602_info_t* lcd_info)
+void onClickMainRadio(i2c_lcd1602_info_t* lcdInfo)
 {
-    displayMenu(lcd_info, RADIO_MENU_ID);
+    displayMenu(lcdInfo, RADIO_MENU_ID);
 }
 
-void onClickMainClock(i2c_lcd1602_info_t* lcd_info)
+void onClickMainClock(i2c_lcd1602_info_t* lcdInfo)
 {
-    displayMenu(lcd_info, CLOCK_MENU_ID);
+    displayMenu(lcdInfo, CLOCK_MENU_ID);
 }
 
 //Echo menu
-void onClickEchoSpeech(i2c_lcd1602_info_t* lcd_info)
+void onClickEchoSpeech(i2c_lcd1602_info_t* lcdInfo)
 {
-    displayMenu(lcd_info, SPEECH_MENU_ID);
+    displayMenu(lcdInfo, SPEECH_MENU_ID);
 }
 
 
@@ -81,6 +81,8 @@ void onEnterClock()
     return;
     
     timeIsInit = 1;
+
+    // This timer will update every second, this way the system time will get updated
     timer_1_sec = xTimerCreate("MyTimer", pdMS_TO_TICKS(1000), pdTRUE, (void *) 1, &time1SecCallback);
     if (xTimerStart(timer_1_sec, 10) != pdPASS)
         printf("Cannot start 1 second timer\n");
