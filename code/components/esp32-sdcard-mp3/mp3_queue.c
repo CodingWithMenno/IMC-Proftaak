@@ -3,7 +3,7 @@
 #include <string.h>
 #include "mp3_queue.h"
 
-char* front(Queue **q)
+char* queue_front(Queue **q)
 {
         if (*q == NULL)
                 return NULL;
@@ -20,7 +20,7 @@ char* front(Queue **q)
         return data;
 }
 
-void enqueue(Queue **q , char *data)
+void queue_enqueue(Queue **q , char *data)
 {
         // Create a new node for the queue
         Queue *newNode = (Queue*) malloc(sizeof(Queue));
@@ -45,7 +45,7 @@ void enqueue(Queue **q , char *data)
         last->next = newNode;
 }
 
-void freeQueue(Queue **q)
+void queue_freeQueue(Queue **q)
 {
         if (*q == NULL)
                 return;
