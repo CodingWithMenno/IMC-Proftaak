@@ -31,10 +31,10 @@ esp_err_t talkingClock_fillQueue()
 
 	int minute = timeinfo.tm_min;
 
-	// Het is
-	mp3_addToQueue(talkingClock_files[TALKING_CLOCK_ITSNOW_INDEX]);
+	// "Het is" audio file
+ 	mp3_addToQueue(talkingClock_files[TALKING_CLOCK_ITSNOW_INDEX]);
 
-	// Het uur
+	// "Het uur" audio files + time checker
 	int hourId = hour == 0 ? 14 : (hour + 2);
 	mp3_addToQueue(talkingClock_files[hourId]);
 	mp3_addToQueue(talkingClock_files[TALKING_CLOCK_HOUR_INDEX]);
