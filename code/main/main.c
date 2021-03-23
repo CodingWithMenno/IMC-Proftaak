@@ -30,7 +30,7 @@
 #define TAG "app"
 
 // Undefine USE_STDIN if no stdin is available (e.g. no USB UART) - a fixed delay will occur instead of a wait for a keypress.
-//#define USE_STDIN  1
+// #define USE_STDIN  1
 #undef USE_STDIN
 
 #define I2C_MASTER_NUM           I2C_NUM_0
@@ -80,6 +80,7 @@ static void wait(unsigned int time)
     vTaskDelay(time / portTICK_RATE_MS);
 }
 
+// Init all the components that make use of the I2C protocol.
 void i2cInit() 
 {
     // Set up I2C
@@ -118,6 +119,7 @@ void i2cInit()
     qwiic_twist_start_task(qwiic_info);
 }
 
+// Encoder method that is used when u hold the encoder button.
 static void onEncoderPressed()
 {
     clickCounter++;
@@ -129,6 +131,7 @@ static void onEncoderPressed()
     }
 }
 
+// Encoder method that is used when u click the encoder button.
 static void onEncoderClicked()
 {
     if (!wentBack)
@@ -139,6 +142,7 @@ static void onEncoderClicked()
     wentBack = false; 
 }
 
+// Encoder method that is used to navigate left and right through the menu's.
 static void onEncoderMoved(int16_t diff)
 {
     if(diff>0)
@@ -150,6 +154,7 @@ static void onEncoderMoved(int16_t diff)
     }
 }
 
+// Method to update the time.
 void stmp_timesync_event(struct timeval *tv)
 {
     ESP_LOGI(TAG, "Notification of a time synchronization event");
